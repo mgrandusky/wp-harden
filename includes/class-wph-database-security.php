@@ -93,6 +93,17 @@ class WPH_Database_Security {
 		$this->logger     = WPH_Logger::get_instance();
 		$this->backup_dir = $this->get_backup_directory();
 		$this->init_hooks();
+		
+		// Defer backup directory and table creation until init to avoid critical events during activation
+		add_action( 'init', array( $this, 'init_backup_system' ), 5 );
+	}
+
+	/**
+	 * Initialize backup system
+	 *
+	 * @since 1.0.0
+	 */
+	public function init_backup_system() {
 		$this->ensure_backup_directory();
 		$this->ensure_backup_table();
 	}
@@ -141,23 +152,35 @@ class WPH_Database_Security {
 	 */
 	private function ensure_backup_directory() {
 		if ( ! file_exists( $this->backup_dir ) ) {
+			// Use WordPress function with error suppression
 			if ( ! wp_mkdir_p( $this->backup_dir ) ) {
-				$this->logger->log( 'database', 'high', 'Failed to create backup directory: ' . $this->backup_dir );
+				// Log error but don't throw exception or trigger critical event
+				error_log( 'WP Harden: Failed to create backup directory: ' . $this->backup_dir );
 				return false;
 			}
+		}
+
+		// Verify directory is writable
+		if ( ! is_writable( $this->backup_dir ) ) {
+			error_log( 'WP Harden: Backup directory is not writable: ' . $this->backup_dir );
+			return false;
 		}
 
 		// Create .htaccess to deny access
 		$htaccess = $this->backup_dir . '/.htaccess';
 		if ( ! file_exists( $htaccess ) ) {
 			$content = "Order deny,allow\nDeny from all";
-			file_put_contents( $htaccess, $content );
+			if ( false === file_put_contents( $htaccess, $content ) ) {
+				error_log( 'WP Harden: Failed to create .htaccess in backup directory' );
+			}
 		}
 
 		// Create index.php to prevent directory listing
 		$index = $this->backup_dir . '/index.php';
 		if ( ! file_exists( $index ) ) {
-			file_put_contents( $index, '<?php // Silence is golden' );
+			if ( false === file_put_contents( $index, '<?php // Silence is golden' ) ) {
+				error_log( 'WP Harden: Failed to create index.php in backup directory' );
+			}
 		}
 
 		return true;

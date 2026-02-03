@@ -29,6 +29,7 @@ class WPH_Activator {
 		global $wpdb;
 
 		$charset_collate = $wpdb->get_charset_collate();
+		$activation_errors = array();
 
 		// Table for security logs
 		$table_logs = $wpdb->prefix . 'wph_logs';
@@ -242,20 +243,33 @@ class WPH_Activator {
 			KEY generated_at (generated_at)
 		) $charset_collate;";
 
+		// Require dbDelta function
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-		dbDelta( $sql_logs );
-		dbDelta( $sql_blocked_ips );
-		dbDelta( $sql_login_attempts );
-		dbDelta( $sql_scan_results );
-		dbDelta( $sql_2fa_tokens );
-		dbDelta( $sql_sessions );
-		dbDelta( $sql_threat_intel );
-		dbDelta( $sql_file_changes );
-		dbDelta( $sql_backups );
-		dbDelta( $sql_audit_trail );
-		dbDelta( $sql_vulnerabilities );
-		dbDelta( $sql_incidents );
-		dbDelta( $sql_compliance );
+		
+		// Create tables with error checking
+		$tables = array(
+			'logs' => $sql_logs,
+			'blocked_ips' => $sql_blocked_ips,
+			'login_attempts' => $sql_login_attempts,
+			'scan_results' => $sql_scan_results,
+			'2fa_tokens' => $sql_2fa_tokens,
+			'sessions' => $sql_sessions,
+			'threat_intelligence' => $sql_threat_intel,
+			'file_changes' => $sql_file_changes,
+			'backups' => $sql_backups,
+			'audit_trail' => $sql_audit_trail,
+			'vulnerabilities' => $sql_vulnerabilities,
+			'incidents' => $sql_incidents,
+			'compliance' => $sql_compliance,
+		);
+
+		foreach ( $tables as $table_name => $sql ) {
+			$result = dbDelta( $sql );
+			if ( ! empty( $wpdb->last_error ) ) {
+				$activation_errors[] = "Error creating table {$table_name}: " . $wpdb->last_error;
+				error_log( "WP Harden Activation: Error creating table {$table_name}: " . $wpdb->last_error );
+			}
+		}
 
 		// Set default options
 		$default_settings = array(
@@ -378,6 +392,12 @@ class WPH_Activator {
 		add_option( 'wph_settings', $default_settings );
 		add_option( 'wph_version', WPH_VERSION );
 		add_option( 'wph_activated_at', current_time( 'mysql' ) );
+
+		// Store activation errors for review if any occurred
+		if ( ! empty( $activation_errors ) ) {
+			add_option( 'wph_activation_errors', $activation_errors );
+			error_log( 'WP Harden Activation: Completed with ' . count( $activation_errors ) . ' errors' );
+		}
 
 		// Clear any cached data
 		wp_cache_flush();

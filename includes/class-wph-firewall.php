@@ -81,8 +81,8 @@ class WPH_Firewall {
 	 * @since 1.0.0
 	 */
 	private function init_hooks() {
-		// Run firewall checks early
-		add_action( 'plugins_loaded', array( $this, 'run_firewall' ), 1 );
+		// Run firewall checks on init instead of plugins_loaded
+		add_action( 'init', array( $this, 'run_firewall' ), 1 );
 		
 		// Cookie security hardening
 		add_action( 'init', array( $this, 'harden_cookies' ), 1 );
