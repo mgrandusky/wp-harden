@@ -467,6 +467,149 @@
 			});
 		});
 
+		// Select all logs
+		$('#wph-select-all-logs').on('change', function() {
+			var isChecked = $(this).prop('checked');
+			$('.wph-log-checkbox').prop('checked', isChecked);
+			updateDeleteButtonState();
+		});
+
+		// Update delete button state
+		$('.wph-log-checkbox').on('change', function() {
+			updateDeleteButtonState();
+		});
+
+		function updateDeleteButtonState() {
+			var checkedCount = $('.wph-log-checkbox:checked').length;
+			$('#wph-delete-selected').prop('disabled', checkedCount === 0);
+		}
+
+		// Delete selected logs
+		$('#wph-delete-selected').on('click', function() {
+			var logIds = [];
+			$('.wph-log-checkbox:checked').each(function() {
+				logIds.push($(this).data('log-id'));
+			});
+			
+			if (logIds.length === 0) {
+				return;
+			}
+			
+			if (!confirm('Delete ' + logIds.length + ' selected log(s)?')) {
+				return;
+			}
+			
+			var $button = $(this);
+			$button.addClass('wph-loading').prop('disabled', true);
+			
+			$.ajax({
+				url: wphAjax.ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'wph_delete_logs',
+					nonce: wphAjax.nonce,
+					log_ids: logIds
+				},
+				success: function(response) {
+					if (response.success) {
+						alert('✅ Logs deleted successfully!');
+						location.reload();
+					} else {
+						alert('❌ Failed to delete logs.');
+					}
+				},
+				error: function() {
+					alert('❌ Failed to delete logs. Please try again.');
+				},
+				complete: function() {
+					$button.removeClass('wph-loading').prop('disabled', false);
+				}
+			});
+		});
+
+		// Block IP from log
+		$(document).on('click', '.wph-block-ip-btn', function(e) {
+			e.preventDefault();
+			
+			var ip = $(this).data('ip');
+			
+			if (!confirm('Block IP address: ' + ip + '?')) {
+				return;
+			}
+			
+			var $button = $(this);
+			$button.addClass('wph-loading').prop('disabled', true);
+			
+			$.ajax({
+				url: wphAjax.ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'wph_block_ip',
+					nonce: wphAjax.nonce,
+					ip: ip,
+					reason: 'Blocked from activity logs',
+					type: 'permanent'
+				},
+				success: function(response) {
+					if (response.success) {
+						alert('✅ IP blocked successfully!');
+						$button.text('✓').removeClass('wph-loading');
+					} else {
+						alert('❌ Failed to block IP.');
+						$button.removeClass('wph-loading').prop('disabled', false);
+					}
+				},
+				error: function() {
+					alert('❌ Failed to block IP. Please try again.');
+					$button.removeClass('wph-loading').prop('disabled', false);
+				}
+			});
+		});
+
+		// Auto-refresh logs
+		var refreshInterval;
+		$('#wph-auto-refresh').on('change', function() {
+			if ($(this).is(':checked')) {
+				refreshInterval = setInterval(function() {
+					location.reload();
+				}, 10000); // 10 seconds
+			} else {
+				clearInterval(refreshInterval);
+			}
+		});
+
+		// View log details
+		$(document).on('click', '.wph-view-log-details', function() {
+			var logId = $(this).data('log-id');
+			
+			$.ajax({
+				url: wphAjax.ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'wph_get_log_details',
+					nonce: wphAjax.nonce,
+					log_id: logId
+				},
+				success: function(response) {
+					if (response.success) {
+						// Display log details in a modal or alert
+						var details = response.data.log;
+						var message = 'Log Details:\n\n';
+						message += 'ID: ' + details.id + '\n';
+						message += 'Time: ' + details.created_at + '\n';
+						message += 'Type: ' + details.log_type + '\n';
+						message += 'Severity: ' + details.severity + '\n';
+						message += 'Message: ' + details.message + '\n';
+						message += 'IP: ' + details.ip_address + '\n';
+						if (details.context) {
+							message += '\nContext:\n' + JSON.stringify(JSON.parse(details.context), null, 2);
+						}
+						alert(message);
+					}
+				}
+			});
+		});
+
 		// Helper functions
 		function ucfirst(str) {
 			return str.charAt(0).toUpperCase() + str.slice(1);

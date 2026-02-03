@@ -253,19 +253,115 @@
 	padding: 15px;
 	border-radius: 4px;
 	margin-bottom: 20px;
+}
+
+.wph-filter-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 15px;
+}
+
+.wph-filter-header h3 {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 600;
+	color: #333;
+}
+
+.wph-filter-actions {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.wph-filter-row {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 15px;
+	margin-bottom: 15px;
+}
+
+.wph-filter-field {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.wph-filter-field label {
+	font-weight: 600;
+	font-size: 13px;
+	color: #666;
+}
+
+.wph-filter-field select,
+.wph-search-input {
+	min-width: 150px;
+	padding: 6px 10px;
+}
+
+.wph-filter-buttons {
 	display: flex;
 	gap: 10px;
-	align-items: center;
 	flex-wrap: wrap;
+	padding-top: 10px;
+	border-top: 1px solid #ddd;
 }
 
-.wph-filter-form label {
+.wph-log-stats {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin: 15px 0;
+	padding: 10px 15px;
+	background: #fff;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+}
+
+.wph-active-filters {
+	color: #2271b1;
 	font-weight: 600;
-	margin-right: 5px;
 }
 
-.wph-filter-form select {
-	min-width: 150px;
+/* Log Message */
+.wph-log-message {
+	max-width: 400px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* IP Address Display */
+.wph-ip-address {
+	font-family: monospace;
+	font-size: 12px;
+	background: #f5f5f5;
+	padding: 2px 6px;
+	border-radius: 3px;
+	display: block;
+	margin-bottom: 5px;
+}
+
+.wph-ip-actions {
+	display: flex;
+	gap: 5px;
+	align-items: center;
+}
+
+.wph-ip-lookup {
+	text-decoration: none;
+	font-size: 16px;
+	cursor: pointer;
+}
+
+.wph-block-ip-btn {
+	background: none;
+	border: none;
+	padding: 0;
+	font-size: 16px;
+	cursor: pointer;
+	line-height: 1;
 }
 
 /* Log Count */
