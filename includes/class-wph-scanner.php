@@ -387,4 +387,245 @@ class WPH_Scanner {
 		}
 		return false;
 	}
+
+	/**
+	 * Fix a specific security issue
+	 *
+	 * @param string $issue_type Type of issue (core_integrity, file_permissions, etc)
+	 * @param array  $issue_data Issue data from scan
+	 * @return array Result with success status and message
+	 * @since 1.0.0
+	 */
+	public function fix_issue( $issue_type, $issue_data ) {
+		switch ( $issue_type ) {
+			case 'core_integrity':
+				return $this->fix_core_integrity_issue( $issue_data );
+			
+			case 'file_permissions':
+				return $this->fix_file_permission_issue( $issue_data );
+			
+			case 'database_security':
+				return $this->fix_database_security_issue( $issue_data );
+			
+			case 'malware_signatures':
+				return array(
+					'success' => false,
+					'message' => 'Malware issues must be manually reviewed. Please quarantine the file or remove it manually.'
+				);
+			
+			default:
+				return array(
+					'success' => false,
+					'message' => 'Unknown issue type.'
+				);
+		}
+	}
+
+	/**
+	 * Fix core integrity issues
+	 *
+	 * @param array $issue Issue data
+	 * @return array Result
+	 * @since 1.0.0
+	 */
+	private function fix_core_integrity_issue( $issue ) {
+		// Fix wp-config.php permissions
+		if ( isset( $issue['file'] ) && $issue['file'] === 'wp-config.php' ) {
+			$wp_config = ABSPATH . 'wp-config.php';
+			if ( file_exists( $wp_config ) ) {
+				if ( @chmod( $wp_config, 0600 ) ) {
+					return array(
+						'success' => true,
+						'message' => 'wp-config.php permissions updated to 0600'
+					);
+				}
+				return array(
+					'success' => false,
+					'message' => 'Failed to update wp-config.php permissions. Please do this manually via FTP/SSH: chmod 600 wp-config.php'
+				);
+			}
+		}
+		
+		// Disable debug mode - provide instructions
+		if ( isset( $issue['setting'] ) && $issue['setting'] === 'WP_DEBUG' ) {
+			return array(
+				'success' => false,
+				'message' => 'Please manually edit wp-config.php and set: define( \'WP_DEBUG\', false );'
+			);
+		}
+		
+		// Database prefix - provide instructions
+		if ( isset( $issue['setting'] ) && $issue['setting'] === 'Database Prefix' ) {
+			return array(
+				'success' => false,
+				'message' => 'Changing database prefix requires a backup and manual database modification. Consider using a migration plugin.'
+			);
+		}
+		
+		return array(
+			'success' => false,
+			'message' => 'Unable to automatically fix this issue. Please review and fix manually.'
+		);
+	}
+
+	/**
+	 * Fix file permission issues
+	 *
+	 * @param array $issue Issue data
+	 * @return array Result
+	 * @since 1.0.0
+	 */
+	private function fix_file_permission_issue( $issue ) {
+		if ( ! isset( $issue['file'] ) ) {
+			return array(
+				'success' => false,
+				'message' => 'Invalid issue data - no file specified.'
+			);
+		}
+		
+		// Construct full file path
+		$file = ABSPATH . $issue['file'];
+		
+		if ( ! file_exists( $file ) ) {
+			return array(
+				'success' => false,
+				'message' => 'File not found: ' . $issue['file']
+			);
+		}
+		
+		// Determine appropriate permissions
+		$new_perms = is_dir( $file ) ? 0755 : 0644;
+		
+		// Special case for wp-config.php
+		if ( basename( $file ) === 'wp-config.php' ) {
+			$new_perms = 0600;
+		}
+		
+		if ( @chmod( $file, $new_perms ) ) {
+			return array(
+				'success' => true,
+				'message' => sprintf( 'Permissions updated to %04o for %s', $new_perms, $issue['file'] )
+			);
+		}
+		
+		return array(
+			'success' => false,
+			'message' => sprintf( 'Failed to update permissions for %s. Please do this via FTP/SSH: chmod %04o %s', $issue['file'], $new_perms, $issue['file'] )
+		);
+	}
+
+	/**
+	 * Fix database security issues
+	 *
+	 * @param array $issue Issue data
+	 * @return array Result
+	 * @since 1.0.0
+	 */
+	private function fix_database_security_issue( $issue ) {
+		// Admin username issue
+		if ( isset( $issue['user'] ) && $issue['user'] === 'admin' ) {
+			return array(
+				'success' => false,
+				'message' => 'Please manually rename the admin user through Users > All Users > Edit or use WP-CLI: wp user update admin --user_login=newusername'
+			);
+		}
+		
+		// Empty password issue
+		if ( isset( $issue['issue'] ) && strpos( $issue['issue'], 'empty password' ) !== false ) {
+			return array(
+				'success' => false,
+				'message' => 'Please reset the password for this user account immediately through Users > All Users.'
+			);
+		}
+		
+		return array(
+			'success' => false,
+			'message' => 'Unable to automatically fix this database security issue. Please review and fix manually.'
+		);
+	}
+
+	/**
+	 * Ignore a security issue
+	 *
+	 * @param string $issue_type Type of issue
+	 * @param array  $issue_data Issue data
+	 * @param string $reason Reason for ignoring (optional)
+	 * @return bool Success status
+	 * @since 1.0.0
+	 */
+	public function ignore_issue( $issue_type, $issue_data, $reason = '' ) {
+		global $wpdb;
+		
+		$table_name = $wpdb->prefix . 'wph_ignored_issues';
+		
+		// Create unique key for this issue
+		$issue_key = md5( $issue_type . wp_json_encode( $issue_data ) );
+		
+		// Check if already ignored
+		$existing = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM `{$table_name}` WHERE issue_key = %s",
+				$issue_key
+			)
+		);
+		
+		if ( $existing > 0 ) {
+			return true; // Already ignored
+		}
+		
+		$result = $wpdb->insert(
+			$table_name,
+			array(
+				'issue_type' => sanitize_text_field( $issue_type ),
+				'issue_key'  => $issue_key,
+				'issue_data' => wp_json_encode( $issue_data ),
+				'ignored_by' => get_current_user_id(),
+				'ignored_at' => current_time( 'mysql' ),
+				'reason'     => sanitize_text_field( $reason ),
+			)
+		);
+		
+		if ( $result ) {
+			// Log the action
+			$logger = WPH_Logger::get_instance();
+			$logger->log(
+				'scanner',
+				'low',
+				sprintf( 'Security issue ignored: %s', $issue_type ),
+				array(
+					'issue' => $issue_data,
+					'reason' => $reason,
+					'user_id' => get_current_user_id()
+				)
+			);
+			
+			return true;
+		}
+		
+		return false;
+	}
+
+	/**
+	 * Check if issue is ignored
+	 *
+	 * @param string $issue_type Type of issue
+	 * @param array  $issue_data Issue data
+	 * @return bool Whether issue is ignored
+	 * @since 1.0.0
+	 */
+	public function is_issue_ignored( $issue_type, $issue_data ) {
+		global $wpdb;
+		
+		$table_name = $wpdb->prefix . 'wph_ignored_issues';
+		$issue_key = md5( $issue_type . wp_json_encode( $issue_data ) );
+		
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM `{$table_name}` WHERE issue_key = %s",
+				$issue_key
+			)
+		);
+		
+		return $count > 0;
+	}
 }

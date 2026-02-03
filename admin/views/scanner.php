@@ -139,7 +139,9 @@ if ( $latest_scan && ! empty( $latest_scan->scan_data ) ) {
 							<?php foreach ( $result['issues'] as $idx => $issue ) : ?>
 								<tr>
 									<td>
-										<input type="checkbox" class="wph-issue-checkbox" data-issue-id="<?php echo esc_attr( $idx ); ?>">
+										<input type="checkbox" class="wph-issue-checkbox" 
+											   data-issue-type="<?php echo esc_attr( $scan_type ); ?>"
+											   data-issue-data="<?php echo esc_attr( wp_json_encode( $issue ) ); ?>" />
 									</td>
 									<td>
 										<strong><?php echo esc_html( $issue['issue'] ?? 'Security Issue' ); ?></strong>
@@ -177,10 +179,14 @@ if ( $latest_scan && ! empty( $latest_scan->scan_data ) ) {
 										<?php endif; ?>
 									</td>
 									<td>
-										<button class="button button-small wph-fix-issue" data-issue-id="<?php echo esc_attr( $idx ); ?>">
+										<button class="button button-small wph-fix-issue" 
+												data-issue-type="<?php echo esc_attr( $scan_type ); ?>"
+												data-issue-data="<?php echo esc_attr( wp_json_encode( $issue ) ); ?>">
 											<?php esc_html_e( 'Fix', 'wp-harden' ); ?>
 										</button>
-										<button class="button button-small wph-ignore-issue" data-issue-id="<?php echo esc_attr( $idx ); ?>">
+										<button class="button button-small wph-ignore-issue"
+												data-issue-type="<?php echo esc_attr( $scan_type ); ?>"
+												data-issue-data="<?php echo esc_attr( wp_json_encode( $issue ) ); ?>">
 											<?php esc_html_e( 'Ignore', 'wp-harden' ); ?>
 										</button>
 										<?php if ( isset( $issue['file'] ) ) : ?>

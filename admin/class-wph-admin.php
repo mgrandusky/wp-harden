@@ -63,6 +63,10 @@ class WPH_Admin {
 		add_action( 'wp_ajax_wph_download_geoip', array( $this, 'ajax_download_geoip' ) );
 		add_action( 'wp_ajax_wph_clear_logs', array( $this, 'ajax_clear_logs' ) );
 		add_action( 'wp_ajax_wph_export_report', array( $this, 'ajax_export_report' ) );
+		add_action( 'wp_ajax_wph_fix_issue', array( $this, 'ajax_fix_issue' ) );
+		add_action( 'wp_ajax_wph_ignore_issue', array( $this, 'ajax_ignore_issue' ) );
+		add_action( 'wp_ajax_wph_bulk_fix', array( $this, 'ajax_bulk_fix' ) );
+		add_action( 'wp_ajax_wph_bulk_ignore', array( $this, 'ajax_bulk_ignore' ) );
 	}
 
 	/**
@@ -715,5 +719,145 @@ class WPH_Admin {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * AJAX handler for fixing a single security issue
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_fix_issue() {
+		check_ajax_referer( 'wph_ajax_nonce', 'nonce' );
+		
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-harden' ) ) );
+		}
+		
+		$issue_type = isset( $_POST['issue_type'] ) ? sanitize_text_field( wp_unslash( $_POST['issue_type'] ) ) : '';
+		$issue_data = isset( $_POST['issue_data'] ) ? json_decode( stripslashes( $_POST['issue_data'] ), true ) : array();
+		
+		if ( empty( $issue_type ) || empty( $issue_data ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid issue data.', 'wp-harden' ) ) );
+		}
+		
+		$scanner = WPH_Scanner::get_instance();
+		$result = $scanner->fix_issue( $issue_type, $issue_data );
+		
+		if ( $result['success'] ) {
+			wp_send_json_success( array(
+				'message' => $result['message'],
+				'fixed' => true
+			) );
+		} else {
+			wp_send_json_error( array( 'message' => $result['message'] ) );
+		}
+	}
+
+	/**
+	 * AJAX handler for ignoring a single security issue
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_ignore_issue() {
+		check_ajax_referer( 'wph_ajax_nonce', 'nonce' );
+		
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-harden' ) ) );
+		}
+		
+		$issue_type = isset( $_POST['issue_type'] ) ? sanitize_text_field( wp_unslash( $_POST['issue_type'] ) ) : '';
+		$issue_data = isset( $_POST['issue_data'] ) ? json_decode( stripslashes( $_POST['issue_data'] ), true ) : array();
+		$reason = isset( $_POST['reason'] ) ? sanitize_text_field( wp_unslash( $_POST['reason'] ) ) : '';
+		
+		if ( empty( $issue_type ) || empty( $issue_data ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid issue data.', 'wp-harden' ) ) );
+		}
+		
+		$scanner = WPH_Scanner::get_instance();
+		$success = $scanner->ignore_issue( $issue_type, $issue_data, $reason );
+		
+		if ( $success ) {
+			wp_send_json_success( array(
+				'message' => __( 'Issue ignored successfully.', 'wp-harden' ),
+				'ignored' => true
+			) );
+		} else {
+			wp_send_json_error( array( 'message' => __( 'Failed to ignore issue.', 'wp-harden' ) ) );
+		}
+	}
+
+	/**
+	 * AJAX handler for bulk fix
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_bulk_fix() {
+		check_ajax_referer( 'wph_ajax_nonce', 'nonce' );
+		
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-harden' ) ) );
+		}
+		
+		$issues = isset( $_POST['issues'] ) ? json_decode( stripslashes( $_POST['issues'] ), true ) : array();
+		
+		if ( empty( $issues ) ) {
+			wp_send_json_error( array( 'message' => __( 'No issues selected.', 'wp-harden' ) ) );
+		}
+		
+		$scanner = WPH_Scanner::get_instance();
+		$fixed_count = 0;
+		$failed_count = 0;
+		$messages = array();
+		
+		foreach ( $issues as $issue ) {
+			$result = $scanner->fix_issue( $issue['type'], $issue['data'] );
+			if ( $result['success'] ) {
+				$fixed_count++;
+			} else {
+				$failed_count++;
+				$messages[] = $result['message'];
+			}
+		}
+		
+		wp_send_json_success( array(
+			'message' => sprintf( __( 'Fixed %d of %d issues.', 'wp-harden' ), $fixed_count, count( $issues ) ),
+			'fixed' => $fixed_count,
+			'failed' => $failed_count,
+			'details' => $messages
+		) );
+	}
+
+	/**
+	 * AJAX handler for bulk ignore
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_bulk_ignore() {
+		check_ajax_referer( 'wph_ajax_nonce', 'nonce' );
+		
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-harden' ) ) );
+		}
+		
+		$issues = isset( $_POST['issues'] ) ? json_decode( stripslashes( $_POST['issues'] ), true ) : array();
+		$reason = isset( $_POST['reason'] ) ? sanitize_text_field( wp_unslash( $_POST['reason'] ) ) : '';
+		
+		if ( empty( $issues ) ) {
+			wp_send_json_error( array( 'message' => __( 'No issues selected.', 'wp-harden' ) ) );
+		}
+		
+		$scanner = WPH_Scanner::get_instance();
+		$ignored_count = 0;
+		
+		foreach ( $issues as $issue ) {
+			if ( $scanner->ignore_issue( $issue['type'], $issue['data'], $reason ) ) {
+				$ignored_count++;
+			}
+		}
+		
+		wp_send_json_success( array(
+			'message' => sprintf( __( 'Ignored %d issues.', 'wp-harden' ), $ignored_count ),
+			'ignored' => $ignored_count
+		) );
 	}
 }

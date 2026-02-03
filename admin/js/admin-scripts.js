@@ -366,16 +366,20 @@
 			});
 		});
 
-		// Fix issue
-		$(document).on('click', '.wph-fix-issue', function() {
-			var issueId = $(this).data('issue-id');
+		// Handle individual Fix button
+		$(document).on('click', '.wph-fix-issue', function(e) {
+			e.preventDefault();
+			
+			var $button = $(this);
+			var issueType = $button.data('issue-type');
+			var issueData = $button.data('issue-data');
+			var $row = $button.closest('tr');
 			
 			if (!confirm('Attempt to automatically fix this issue?')) {
 				return;
 			}
 			
-			var $button = $(this);
-			$button.addClass('wph-loading').prop('disabled', true);
+			$button.prop('disabled', true).text('Fixing...');
 			
 			$.ajax({
 				url: wphAjax.ajaxurl,
@@ -383,33 +387,43 @@
 				data: {
 					action: 'wph_fix_issue',
 					nonce: wphAjax.nonce,
-					issue_id: issueId
+					issue_type: issueType,
+					issue_data: JSON.stringify(issueData)
 				},
 				success: function(response) {
 					if (response.success) {
-						alert('✅ Issue fixed successfully!');
-						location.reload();
+						showNotice('success', response.data.message);
+						$row.fadeOut(400, function() {
+							$(this).remove();
+							updateIssueCount();
+						});
 					} else {
-						alert('❌ Failed to fix issue: ' + (response.data.message || 'Unknown error'));
+						showNotice('error', response.data.message);
+						$button.prop('disabled', false).text('Fix');
 					}
 				},
 				error: function() {
-					alert('❌ Failed to fix issue. Please try again.');
-				},
-				complete: function() {
-					$button.removeClass('wph-loading').prop('disabled', false);
+					showNotice('error', 'An error occurred while fixing the issue.');
+					$button.prop('disabled', false).text('Fix');
 				}
 			});
 		});
 
-		// Ignore issue
-		$(document).on('click', '.wph-ignore-issue', function() {
-			var issueId = $(this).data('issue-id');
-			var $row = $(this).closest('tr');
+		// Handle individual Ignore button
+		$(document).on('click', '.wph-ignore-issue', function(e) {
+			e.preventDefault();
 			
-			if (!confirm('Ignore this issue? It will not appear in future scans.')) {
-				return;
+			var $button = $(this);
+			var issueType = $button.data('issue-type');
+			var issueData = $button.data('issue-data');
+			var $row = $button.closest('tr');
+			
+			var reason = prompt('Why are you ignoring this issue? (optional)');
+			if (reason === null) {
+				return; // User cancelled
 			}
+			
+			$button.prop('disabled', true).text('Ignoring...');
 			
 			$.ajax({
 				url: wphAjax.ajaxurl,
@@ -417,19 +431,162 @@
 				data: {
 					action: 'wph_ignore_issue',
 					nonce: wphAjax.nonce,
-					issue_id: issueId
+					issue_type: issueType,
+					issue_data: JSON.stringify(issueData),
+					reason: reason
 				},
 				success: function(response) {
 					if (response.success) {
-						$row.fadeOut(300, function() {
+						showNotice('success', response.data.message);
+						$row.fadeOut(400, function() {
 							$(this).remove();
+							updateIssueCount();
 						});
 					} else {
-						alert('❌ Failed to ignore issue.');
+						showNotice('error', response.data.message);
+						$button.prop('disabled', false).text('Ignore');
 					}
+				},
+				error: function() {
+					showNotice('error', 'An error occurred while ignoring the issue.');
+					$button.prop('disabled', false).text('Ignore');
 				}
 			});
 		});
+
+		// Handle bulk Fix Selected button
+		$(document).on('click', '.wph-fix-selected', function(e) {
+			e.preventDefault();
+			
+			var $button = $(this);
+			var $section = $button.closest('.wph-scan-result');
+			var $checkboxes = $section.find('.wph-issue-checkbox:checked');
+			
+			if ($checkboxes.length === 0) {
+				alert('Please select issues to fix.');
+				return;
+			}
+			
+			if (!confirm('Attempt to fix ' + $checkboxes.length + ' selected issues?')) {
+				return;
+			}
+			
+			var issues = [];
+			$checkboxes.each(function() {
+				issues.push({
+					type: $(this).data('issue-type'),
+					data: $(this).data('issue-data')
+				});
+			});
+			
+			$button.prop('disabled', true).text('Fixing...');
+			
+			$.ajax({
+				url: wphAjax.ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'wph_bulk_fix',
+					nonce: wphAjax.nonce,
+					issues: JSON.stringify(issues)
+				},
+				success: function(response) {
+					if (response.success) {
+						showNotice('success', response.data.message);
+						if (response.data.details && response.data.details.length > 0) {
+							console.log('Fix details:', response.data.details);
+						}
+						$checkboxes.closest('tr').fadeOut(400, function() {
+							$(this).remove();
+							updateIssueCount();
+						});
+					} else {
+						showNotice('error', response.data.message);
+					}
+					$button.prop('disabled', false).text('🔧 Fix Selected');
+				},
+				error: function() {
+					showNotice('error', 'An error occurred during bulk fix.');
+					$button.prop('disabled', false).text('🔧 Fix Selected');
+				}
+			});
+		});
+
+		// Handle bulk Ignore Selected button
+		$(document).on('click', '.wph-ignore-selected', function(e) {
+			e.preventDefault();
+			
+			var $button = $(this);
+			var $section = $button.closest('.wph-scan-result');
+			var $checkboxes = $section.find('.wph-issue-checkbox:checked');
+			
+			if ($checkboxes.length === 0) {
+				alert('Please select issues to ignore.');
+				return;
+			}
+			
+			var reason = prompt('Why are you ignoring these issues? (optional)');
+			if (reason === null) {
+				return;
+			}
+			
+			var issues = [];
+			$checkboxes.each(function() {
+				issues.push({
+					type: $(this).data('issue-type'),
+					data: $(this).data('issue-data')
+				});
+			});
+			
+			$button.prop('disabled', true).text('Ignoring...');
+			
+			$.ajax({
+				url: wphAjax.ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'wph_bulk_ignore',
+					nonce: wphAjax.nonce,
+					issues: JSON.stringify(issues),
+					reason: reason
+				},
+				success: function(response) {
+					if (response.success) {
+						showNotice('success', response.data.message);
+						$checkboxes.closest('tr').fadeOut(400, function() {
+							$(this).remove();
+							updateIssueCount();
+						});
+					} else {
+						showNotice('error', response.data.message);
+					}
+					$button.prop('disabled', false).text('👁️ Ignore Selected');
+				},
+				error: function() {
+					showNotice('error', 'An error occurred during bulk ignore.');
+					$button.prop('disabled', false).text('👁️ Ignore Selected');
+				}
+			});
+		});
+
+		// Helper function to show admin notices
+		function showNotice(type, message) {
+			var noticeClass = type === 'success' ? 'notice-success' : 'notice-error';
+			var $notice = $('<div class="notice ' + noticeClass + ' is-dismissible"><p></p></div>');
+			$notice.find('p').text(message);
+			$('.wrap h1').after($notice);
+			
+			// Auto-dismiss after 5 seconds
+			setTimeout(function() {
+				$notice.fadeOut(400, function() {
+					$(this).remove();
+				});
+			}, 5000);
+		}
+
+		// Update total issues count
+		function updateIssueCount() {
+			var totalIssues = $('.wph-scan-result table tbody tr:visible').length;
+			$('.wph-total-issues').text(totalIssues);
+		}
 
 		// Quarantine file
 		$(document).on('click', '.wph-quarantine-file', function() {
