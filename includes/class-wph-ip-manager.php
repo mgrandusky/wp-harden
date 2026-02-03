@@ -317,15 +317,25 @@ class WPH_IP_Manager {
 	public function get_client_ip() {
 		$ip = '';
 
-		if ( ! empty( $_SERVER['HTTP_CLIENT_IP'] ) ) {
-			$ip = sanitize_text_field( wp_unslash( $_SERVER['HTTP_CLIENT_IP'] ) );
-		} elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
-			$ip = sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) );
-		} elseif ( ! empty( $_SERVER['REMOTE_ADDR'] ) ) {
+		// Check for Cloudflare
+		if ( ! empty( $_SERVER['HTTP_CF_CONNECTING_IP'] ) ) {
+			$ip = sanitize_text_field( wp_unslash( $_SERVER['HTTP_CF_CONNECTING_IP'] ) );
+		}
+		// Check for proxy
+		elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
+			$ip_list = explode( ',', sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) );
+			$ip = trim( $ip_list[0] );
+		}
+		// Check for other proxy headers
+		elseif ( ! empty( $_SERVER['HTTP_X_REAL_IP'] ) ) {
+			$ip = sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_REAL_IP'] ) );
+		}
+		// Fallback to REMOTE_ADDR
+		elseif ( ! empty( $_SERVER['REMOTE_ADDR'] ) ) {
 			$ip = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) );
 		}
 
-		// Validate IP address
+		// Validate and sanitize
 		$ip = filter_var( $ip, FILTER_VALIDATE_IP );
 
 		return $ip ? $ip : '0.0.0.0';

@@ -69,30 +69,41 @@ class WPH_Logger {
 	public function log( $log_type, $severity, $message, $metadata = array() ) {
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'wph_logs';
+		// Add try-catch for database operations
+		try {
+			$table = $wpdb->prefix . 'wph_logs';
 
-		$data = array(
-			'log_type'   => sanitize_text_field( $log_type ),
-			'severity'   => sanitize_text_field( $severity ),
-			'message'    => sanitize_text_field( $message ),
-			'ip_address' => $this->get_client_ip(),
-			'user_id'    => get_current_user_id(),
-			'metadata'   => wp_json_encode( $metadata ),
-			'created_at' => current_time( 'mysql' ),
-		);
+			// Get IP address from IP Manager
+			$ip_manager = WPH_IP_Manager::get_instance();
+			$ip_address = $ip_manager->get_client_ip();
 
-		$result = $wpdb->insert( $table, $data );
+			$data = array(
+				'log_type'   => sanitize_text_field( $log_type ),
+				'severity'   => sanitize_text_field( $severity ),
+				'message'    => sanitize_text_field( $message ),
+				'ip_address' => $ip_address,
+				'user_id'    => get_current_user_id(),
+				'metadata'   => wp_json_encode( $metadata ),
+				'created_at' => current_time( 'mysql' ),
+			);
 
-		if ( $result ) {
-			// Trigger notification for critical events
-			if ( 'critical' === $severity || 'high' === $severity ) {
-				do_action( 'wph_critical_event', $log_type, $message, $metadata );
+			$result = $wpdb->insert( $table, $data );
+
+			if ( $result ) {
+				// Trigger notification for critical events
+				if ( 'critical' === $severity || 'high' === $severity ) {
+					do_action( 'wph_critical_event', $log_type, $message, $metadata );
+				}
+
+				return $wpdb->insert_id;
 			}
 
-			return $wpdb->insert_id;
+			return false;
+		} catch ( Exception $e ) {
+			// Silent failure for non-critical logging
+			error_log( 'WP Harden Logger Error: ' . $e->getMessage() );
+			return false;
 		}
-
-		return false;
 	}
 
 	/**
@@ -220,28 +231,5 @@ class WPH_Logger {
 				$retention_days
 			)
 		);
-	}
-
-	/**
-	 * Get client IP address
-	 *
-	 * @return string
-	 * @since 1.0.0
-	 */
-	private function get_client_ip() {
-		$ip = '';
-
-		if ( ! empty( $_SERVER['HTTP_CLIENT_IP'] ) ) {
-			$ip = sanitize_text_field( wp_unslash( $_SERVER['HTTP_CLIENT_IP'] ) );
-		} elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
-			$ip = sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) );
-		} elseif ( ! empty( $_SERVER['REMOTE_ADDR'] ) ) {
-			$ip = sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) );
-		}
-
-		// Validate IP address
-		$ip = filter_var( $ip, FILTER_VALIDATE_IP );
-
-		return $ip ? $ip : '0.0.0.0';
 	}
 }

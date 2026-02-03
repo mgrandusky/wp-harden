@@ -65,6 +65,12 @@ class WPH_Notifications {
 	 * @since 1.0.0
 	 */
 	public function handle_critical_event( $event_type, $message, $metadata ) {
+		// Don't send notifications during early initialization
+		if ( ! did_action( 'init' ) ) {
+			error_log( sprintf( 'WP Harden: Critical event during init - %s: %s', $event_type, $message ) );
+			return;
+		}
+
 		$settings = WPH_Settings::get_instance();
 
 		if ( ! $settings->get( 'email_notifications', true ) ) {
@@ -84,6 +90,12 @@ class WPH_Notifications {
 	 * @since 1.0.0
 	 */
 	public function send_security_alert( $event_type, $message, $metadata ) {
+		// Check if wp_mail is available
+		if ( ! function_exists( 'wp_mail' ) ) {
+			error_log( 'WP Harden: Cannot send email - wp_mail not available' );
+			return false;
+		}
+
 		$settings = WPH_Settings::get_instance();
 		$to       = $settings->get( 'notification_email', get_option( 'admin_email' ) );
 
@@ -108,6 +120,12 @@ class WPH_Notifications {
 	 * @since 1.0.0
 	 */
 	public function send_scan_alert( $scan_results ) {
+		// Check if wp_mail is available
+		if ( ! function_exists( 'wp_mail' ) ) {
+			error_log( 'WP Harden: Cannot send email - wp_mail not available' );
+			return false;
+		}
+
 		$settings = WPH_Settings::get_instance();
 		$to       = $settings->get( 'notification_email', get_option( 'admin_email' ) );
 

@@ -79,8 +79,26 @@ class WPH_Core {
 	 * @since 1.0.0
 	 */
 	private function define_hooks() {
-		// Initialize settings
+		// Initialize settings early (safe to do during plugins_loaded)
 		$settings = WPH_Settings::get_instance();
+
+		// Initialize security components after WordPress is fully loaded
+		add_action( 'init', array( $this, 'init_security_components' ), 1 );
+
+		// Schedule cron jobs
+		add_action( 'wp', array( $this, 'schedule_events' ) );
+	}
+
+	/**
+	 * Initialize security components
+	 *
+	 * @since 1.0.0
+	 */
+	public function init_security_components() {
+		// Check if we're ready
+		if ( ! did_action( 'init' ) ) {
+			return;
+		}
 
 		// Initialize firewall (runs early)
 		$firewall = WPH_Firewall::get_instance();
@@ -122,9 +140,6 @@ class WPH_Core {
 		if ( is_admin() ) {
 			$admin = WPH_Admin::get_instance();
 		}
-
-		// Schedule cron jobs
-		add_action( 'wp', array( $this, 'schedule_events' ) );
 	}
 
 	/**
