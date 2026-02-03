@@ -137,7 +137,12 @@ class WPH_Logger {
 		$limit        = absint( $args['limit'] );
 		$offset       = absint( $args['offset'] );
 
-		$query = "SELECT * FROM $table WHERE $where_clause ORDER BY $orderby LIMIT $limit OFFSET $offset";
+		// Use prepare for the complete query
+		$query = $wpdb->prepare(
+			"SELECT * FROM $table WHERE $where_clause ORDER BY $orderby LIMIT %d OFFSET %d",
+			$limit,
+			$offset
+		);
 
 		return $wpdb->get_results( $query );
 	}

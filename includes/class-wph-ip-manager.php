@@ -241,7 +241,12 @@ class WPH_IP_Manager {
 		$limit        = absint( $args['limit'] );
 		$offset       = absint( $args['offset'] );
 
-		$query = "SELECT * FROM $table $where_clause ORDER BY blocked_at DESC LIMIT $limit OFFSET $offset";
+		// Use prepare for LIMIT and OFFSET
+		$query = $wpdb->prepare(
+			"SELECT * FROM $table $where_clause ORDER BY blocked_at DESC LIMIT %d OFFSET %d",
+			$limit,
+			$offset
+		);
 
 		return $wpdb->get_results( $query );
 	}
@@ -281,7 +286,11 @@ class WPH_IP_Manager {
 
 		// CIDR notation support
 		if ( strpos( $pattern, '/' ) !== false ) {
-			list( $subnet, $mask ) = explode( '/', $pattern );
+			$parts = explode( '/', $pattern, 2 );
+			if ( count( $parts ) !== 2 ) {
+				return false;
+			}
+			list( $subnet, $mask ) = $parts;
 
 			$ip_long     = ip2long( $ip );
 			$subnet_long = ip2long( $subnet );

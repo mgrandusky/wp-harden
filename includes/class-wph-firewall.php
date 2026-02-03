@@ -247,7 +247,10 @@ class WPH_Firewall {
 	 * @since 1.0.0
 	 */
 	private function check_patterns_in_request( $patterns ) {
-		$request_data = array_merge( $_GET, $_POST );
+		// Safely handle request data with wp_unslash
+		$get_data  = isset( $_GET ) ? wp_unslash( $_GET ) : array();
+		$post_data = isset( $_POST ) ? wp_unslash( $_POST ) : array();
+		$request_data = array_merge( $get_data, $post_data );
 
 		foreach ( $request_data as $value ) {
 			if ( is_array( $value ) ) {

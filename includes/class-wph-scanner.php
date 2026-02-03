@@ -274,7 +274,10 @@ class WPH_Scanner {
 
 		// Check for users without passwords (should not exist)
 		$users_without_password = $wpdb->get_var(
-			"SELECT COUNT(*) FROM {$wpdb->users} WHERE user_pass = ''"
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->users} WHERE user_pass = %s",
+				''
+			)
 		);
 
 		if ( $users_without_password > 0 ) {

@@ -280,7 +280,7 @@ class WPH_Login_Security {
 			return;
 		}
 
-		$password = $_POST['pass1'];
+		$password = wp_unslash( $_POST['pass1'] );
 
 		// Check password strength
 		if ( ! $this->is_strong_password( $password ) ) {
