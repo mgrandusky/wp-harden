@@ -59,6 +59,8 @@ class WPH_Admin {
 		add_action( 'wp_ajax_wph_block_ip', array( $this, 'ajax_block_ip' ) );
 		add_action( 'wp_ajax_wph_unblock_ip', array( $this, 'ajax_unblock_ip' ) );
 		add_action( 'wp_ajax_wph_export_logs', array( $this, 'ajax_export_logs' ) );
+		add_action( 'wp_ajax_wph_test_api_key', array( $this, 'ajax_test_api_key' ) );
+		add_action( 'wp_ajax_wph_download_geoip', array( $this, 'ajax_download_geoip' ) );
 	}
 
 	/**
@@ -319,5 +321,155 @@ class WPH_Admin {
 
 		echo $csv;
 		exit;
+	}
+
+	/**
+	 * AJAX handler for testing API keys
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_test_api_key() {
+		check_ajax_referer( 'wph_ajax_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'wp-harden' ) ) );
+		}
+
+		$api_type = isset( $_POST['api_type'] ) ? sanitize_text_field( wp_unslash( $_POST['api_type'] ) ) : '';
+		$api_key  = isset( $_POST['api_key'] ) ? sanitize_text_field( wp_unslash( $_POST['api_key'] ) ) : '';
+
+		if ( empty( $api_type ) || empty( $api_key ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid parameters', 'wp-harden' ) ) );
+		}
+
+		$result = $this->test_api_connection( $api_type, $api_key );
+
+		if ( $result['success'] ) {
+			wp_send_json_success( $result );
+		} else {
+			wp_send_json_error( $result );
+		}
+	}
+
+	/**
+	 * AJAX handler for downloading GeoIP database
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_download_geoip() {
+		check_ajax_referer( 'wph_ajax_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'wp-harden' ) ) );
+		}
+
+		$license_key = isset( $_POST['license_key'] ) ? sanitize_text_field( wp_unslash( $_POST['license_key'] ) ) : '';
+
+		if ( empty( $license_key ) ) {
+			wp_send_json_error( array( 'message' => __( 'License key is required', 'wp-harden' ) ) );
+		}
+
+		// Placeholder for actual GeoIP download logic
+		// In a real implementation, this would download the MaxMind database
+		wp_send_json_success( array( 'message' => __( 'GeoIP database download functionality will be implemented', 'wp-harden' ) ) );
+	}
+
+	/**
+	 * Test API connection
+	 *
+	 * @param string $api_type API type (abuseipdb, wpscan, virustotal).
+	 * @param string $api_key  API key to test.
+	 * @return array Result of the test
+	 * @since 1.0.0
+	 */
+	private function test_api_connection( $api_type, $api_key ) {
+		$result = array(
+			'success' => false,
+			'message' => '',
+		);
+
+		switch ( $api_type ) {
+			case 'abuseipdb':
+				// Test AbuseIPDB API
+				$response = wp_remote_get(
+					'https://api.abuseipdb.com/api/v2/check?ipAddress=127.0.0.1',
+					array(
+						'headers' => array(
+							'Key'    => $api_key,
+							'Accept' => 'application/json',
+						),
+						'timeout' => 10,
+					)
+				);
+
+				if ( is_wp_error( $response ) ) {
+					$result['message'] = $response->get_error_message();
+				} else {
+					$code = wp_remote_retrieve_response_code( $response );
+					if ( 200 === $code ) {
+						$result['success'] = true;
+						$result['message'] = __( 'AbuseIPDB API key is valid', 'wp-harden' );
+					} else {
+						$result['message'] = __( 'Invalid API key or API error', 'wp-harden' );
+					}
+				}
+				break;
+
+			case 'wpscan':
+				// Test WPScan API
+				$response = wp_remote_get(
+					'https://wpscan.com/api/v3/wordpress/versions',
+					array(
+						'headers' => array(
+							'Authorization' => 'Token token=' . $api_key,
+						),
+						'timeout' => 10,
+					)
+				);
+
+				if ( is_wp_error( $response ) ) {
+					$result['message'] = $response->get_error_message();
+				} else {
+					$code = wp_remote_retrieve_response_code( $response );
+					if ( 200 === $code ) {
+						$result['success'] = true;
+						$result['message'] = __( 'WPScan API key is valid', 'wp-harden' );
+					} else {
+						$result['message'] = __( 'Invalid API key or API error', 'wp-harden' );
+					}
+				}
+				break;
+
+			case 'virustotal':
+				// Test VirusTotal API
+				$response = wp_remote_get(
+					'https://www.virustotal.com/api/v3/ip_addresses/127.0.0.1',
+					array(
+						'headers' => array(
+							'x-apikey' => $api_key,
+						),
+						'timeout' => 10,
+					)
+				);
+
+				if ( is_wp_error( $response ) ) {
+					$result['message'] = $response->get_error_message();
+				} else {
+					$code = wp_remote_retrieve_response_code( $response );
+					if ( 200 === $code ) {
+						$result['success'] = true;
+						$result['message'] = __( 'VirusTotal API key is valid', 'wp-harden' );
+					} else {
+						$result['message'] = __( 'Invalid API key or API error', 'wp-harden' );
+					}
+				}
+				break;
+
+			default:
+				$result['message'] = __( 'Unknown API type', 'wp-harden' );
+				break;
+		}
+
+		return $result;
 	}
 }

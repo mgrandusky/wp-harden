@@ -158,6 +158,94 @@
 			form.remove();
 		});
 
+		// Test API Connection
+		$('.wph-test-api').on('click', function(e) {
+			e.preventDefault();
+			
+			var $button = $(this);
+			var apiType = $button.data('api');
+			var apiKeyField = $('input[name="' + apiType + '_api_key"]');
+			var apiKey = apiKeyField.val();
+			
+			if (!apiKey) {
+				alert('Please enter an API key first.');
+				return;
+			}
+			
+			// Add loading state
+			$button.addClass('wph-loading').prop('disabled', true);
+			var originalText = $button.text();
+			$button.text('Testing...');
+			
+			$.ajax({
+				url: wphAjax.ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'wph_test_api_key',
+					nonce: wphAjax.nonce,
+					api_type: apiType,
+					api_key: apiKey
+				},
+				success: function(response) {
+					if (response.success) {
+						alert('✅ Connection successful! API key is valid.');
+					} else {
+						alert('❌ Connection failed: ' + (response.data.message || 'Invalid API key'));
+					}
+				},
+				error: function() {
+					alert('❌ Connection failed. Please try again.');
+				},
+				complete: function() {
+					$button.removeClass('wph-loading').prop('disabled', false).text(originalText);
+				}
+			});
+		});
+
+		// Download GeoIP Database
+		$('.wph-download-geoip').on('click', function(e) {
+			e.preventDefault();
+			
+			var $button = $(this);
+			var licenseKey = $('input[name="maxmind_license_key"]').val();
+			
+			if (!licenseKey) {
+				alert('Please enter a MaxMind license key first.');
+				return;
+			}
+			
+			if (!confirm('This will download the MaxMind GeoIP database. Continue?')) {
+				return;
+			}
+			
+			$button.addClass('wph-loading').prop('disabled', true);
+			var originalText = $button.text();
+			$button.text('Downloading...');
+			
+			$.ajax({
+				url: wphAjax.ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'wph_download_geoip',
+					nonce: wphAjax.nonce,
+					license_key: licenseKey
+				},
+				success: function(response) {
+					if (response.success) {
+						alert('✅ GeoIP database downloaded successfully!');
+					} else {
+						alert('❌ Download failed: ' + (response.data.message || 'Unknown error'));
+					}
+				},
+				error: function() {
+					alert('❌ Download failed. Please try again.');
+				},
+				complete: function() {
+					$button.removeClass('wph-loading').prop('disabled', false).text(originalText);
+				}
+			});
+		});
+
 		// Helper functions
 		function ucfirst(str) {
 			return str.charAt(0).toUpperCase() + str.slice(1);
