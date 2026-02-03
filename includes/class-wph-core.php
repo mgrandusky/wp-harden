@@ -57,6 +57,15 @@ class WPH_Core {
 		require_once WPH_PLUGIN_DIR . 'includes/class-wph-login-security.php';
 		require_once WPH_PLUGIN_DIR . 'includes/class-wph-scanner.php';
 		require_once WPH_PLUGIN_DIR . 'includes/class-wph-notifications.php';
+		require_once WPH_PLUGIN_DIR . 'includes/class-wph-advanced-auth.php';
+		require_once WPH_PLUGIN_DIR . 'includes/class-wph-hardening.php';
+		require_once WPH_PLUGIN_DIR . 'includes/class-wph-threat-intelligence.php';
+		require_once WPH_PLUGIN_DIR . 'includes/class-wph-file-protection.php';
+		require_once WPH_PLUGIN_DIR . 'includes/class-wph-database-security.php';
+		require_once WPH_PLUGIN_DIR . 'includes/class-wph-advanced-monitoring.php';
+		require_once WPH_PLUGIN_DIR . 'includes/class-wph-vulnerability-manager.php';
+		require_once WPH_PLUGIN_DIR . 'includes/class-wph-incident-response.php';
+		require_once WPH_PLUGIN_DIR . 'includes/class-wph-compliance.php';
 
 		// Admin classes
 		if ( is_admin() ) {
@@ -81,6 +90,33 @@ class WPH_Core {
 
 		// Initialize scanner
 		$scanner = WPH_Scanner::get_instance();
+
+		// Initialize advanced authentication
+		$advanced_auth = WPH_Advanced_Auth::get_instance();
+
+		// Initialize security hardening
+		$hardening = WPH_Hardening::get_instance();
+
+		// Initialize threat intelligence
+		$threat_intel = WPH_Threat_Intelligence::get_instance();
+
+		// Initialize file protection
+		$file_protection = WPH_File_Protection::get_instance();
+
+		// Initialize database security
+		$db_security = WPH_Database_Security::get_instance();
+
+		// Initialize advanced monitoring
+		$monitoring = WPH_Advanced_Monitoring::get_instance();
+
+		// Initialize vulnerability manager
+		$vuln_manager = WPH_Vulnerability_Manager::get_instance();
+
+		// Initialize incident response
+		$incident_response = WPH_Incident_Response::get_instance();
+
+		// Initialize compliance
+		$compliance = WPH_Compliance::get_instance();
 
 		// Initialize admin interface
 		if ( is_admin() ) {
