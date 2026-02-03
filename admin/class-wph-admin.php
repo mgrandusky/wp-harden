@@ -61,6 +61,8 @@ class WPH_Admin {
 		add_action( 'wp_ajax_wph_export_logs', array( $this, 'ajax_export_logs' ) );
 		add_action( 'wp_ajax_wph_test_api_key', array( $this, 'ajax_test_api_key' ) );
 		add_action( 'wp_ajax_wph_download_geoip', array( $this, 'ajax_download_geoip' ) );
+		add_action( 'wp_ajax_wph_clear_logs', array( $this, 'ajax_clear_logs' ) );
+		add_action( 'wp_ajax_wph_export_report', array( $this, 'ajax_export_report' ) );
 	}
 
 	/**
@@ -372,6 +374,248 @@ class WPH_Admin {
 		// Placeholder for actual GeoIP download logic
 		// In a real implementation, this would download the MaxMind database
 		wp_send_json_success( array( 'message' => __( 'GeoIP database download functionality will be implemented', 'wp-harden' ) ) );
+	}
+
+	/**
+	 * AJAX handler for clearing old logs
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_clear_logs() {
+		check_ajax_referer( 'wph_ajax_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'wp-harden' ) ) );
+		}
+
+		$logger   = WPH_Logger::get_instance();
+		$settings = WPH_Settings::get_instance();
+		
+		$retention_days = $settings->get( 'log_retention_days', 30 );
+		$deleted        = $logger->clean_old_logs( $retention_days );
+
+		wp_send_json_success(
+			array(
+				'message' => sprintf(
+					/* translators: %d: number of deleted logs */
+					__( '%d old logs deleted successfully', 'wp-harden' ),
+					$deleted
+				),
+			)
+		);
+	}
+
+	/**
+	 * AJAX handler for exporting security report
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_export_report() {
+		check_ajax_referer( 'wph_ajax_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Unauthorized', 'wp-harden' ) );
+		}
+
+		$logger     = WPH_Logger::get_instance();
+		$ip_manager = WPH_IP_Manager::get_instance();
+		$settings   = WPH_Settings::get_instance();
+
+		global $wpdb;
+		
+		// Gather report data
+		$report_data = array();
+		
+		// Summary statistics
+		$report_data['summary'] = array(
+			'total_logs'      => $logger->get_log_count(),
+			'critical_events' => $logger->get_log_count( array( 'severity' => 'critical' ) ),
+			'blocked_ips'     => count( $ip_manager->get_blocked_ips() ),
+			'generated_at'    => current_time( 'mysql' ),
+		);
+
+		// Latest scan
+		$latest_scan = $wpdb->get_row(
+			"SELECT * FROM {$wpdb->prefix}wph_scan_results 
+			WHERE status = 'completed' 
+			ORDER BY completed_at DESC 
+			LIMIT 1"
+		);
+		
+		if ( $latest_scan ) {
+			$report_data['latest_scan'] = array(
+				'completed_at'  => $latest_scan->completed_at,
+				'issues_found'  => $latest_scan->issues_found,
+				'status'        => $latest_scan->status,
+			);
+		}
+
+		// Recent critical logs
+		$critical_logs = $logger->get_logs(
+			array(
+				'severity' => 'critical',
+				'limit'    => 50,
+			)
+		);
+		
+		$report_data['critical_events'] = $critical_logs;
+
+		// Blocked IPs
+		$blocked_ips = $ip_manager->get_blocked_ips( array( 'limit' => 100 ) );
+		$report_data['blocked_ips'] = $blocked_ips;
+
+		// Generate report
+		$report = $this->generate_report_html( $report_data );
+
+		// Output as HTML
+		header( 'Content-Type: text/html; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="wph-security-report-' . gmdate( 'Y-m-d' ) . '.html"' );
+		header( 'Pragma: no-cache' );
+		header( 'Expires: 0' );
+
+		echo $report;
+		exit;
+	}
+
+	/**
+	 * Generate HTML security report
+	 *
+	 * @param array $data Report data.
+	 * @return string HTML report
+	 * @since 1.0.0
+	 */
+	private function generate_report_html( $data ) {
+		ob_start();
+		?>
+		<!DOCTYPE html>
+		<html>
+		<head>
+			<meta charset="UTF-8">
+			<title>WP Harden Security Report - <?php echo esc_html( gmdate( 'Y-m-d' ) ); ?></title>
+			<style>
+				body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+				.container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+				h1 { color: #2271b1; border-bottom: 3px solid #2271b1; padding-bottom: 10px; }
+				h2 { color: #333; margin-top: 30px; border-bottom: 1px solid #ddd; padding-bottom: 8px; }
+				.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }
+				.summary-card { background: #f9f9f9; padding: 15px; border-left: 4px solid #2271b1; }
+				.summary-card strong { display: block; color: #666; font-size: 12px; margin-bottom: 5px; }
+				.summary-card .value { font-size: 24px; font-weight: bold; color: #2271b1; }
+				table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+				th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+				th { background: #f5f5f5; font-weight: bold; }
+				.severity-critical { color: #d63638; font-weight: bold; }
+				.severity-high { color: #d63638; }
+				.severity-medium { color: #dba617; }
+				.severity-low { color: #2271b1; }
+				.footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666; font-size: 12px; }
+			</style>
+		</head>
+		<body>
+			<div class="container">
+				<h1>🛡️ WP Harden Security Report</h1>
+				<p>Generated on <?php echo esc_html( gmdate( 'F j, Y - H:i:s' ) ); ?> UTC</p>
+
+				<h2>Summary</h2>
+				<div class="summary-grid">
+					<div class="summary-card">
+						<strong>Total Security Events</strong>
+						<div class="value"><?php echo absint( $data['summary']['total_logs'] ); ?></div>
+					</div>
+					<div class="summary-card">
+						<strong>Critical Events</strong>
+						<div class="value"><?php echo absint( $data['summary']['critical_events'] ); ?></div>
+					</div>
+					<div class="summary-card">
+						<strong>Blocked IP Addresses</strong>
+						<div class="value"><?php echo absint( $data['summary']['blocked_ips'] ); ?></div>
+					</div>
+				</div>
+
+				<?php if ( isset( $data['latest_scan'] ) ) : ?>
+				<h2>Latest Security Scan</h2>
+				<table>
+					<tr>
+						<th>Completed</th>
+						<td><?php echo esc_html( $data['latest_scan']['completed_at'] ); ?></td>
+					</tr>
+					<tr>
+						<th>Issues Found</th>
+						<td><?php echo absint( $data['latest_scan']['issues_found'] ); ?></td>
+					</tr>
+					<tr>
+						<th>Status</th>
+						<td><?php echo esc_html( ucfirst( $data['latest_scan']['status'] ) ); ?></td>
+					</tr>
+				</table>
+				<?php endif; ?>
+
+				<h2>Recent Critical Events</h2>
+				<?php if ( ! empty( $data['critical_events'] ) ) : ?>
+				<table>
+					<thead>
+						<tr>
+							<th>Date/Time</th>
+							<th>Type</th>
+							<th>Severity</th>
+							<th>Message</th>
+							<th>IP Address</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $data['critical_events'] as $event ) : ?>
+						<tr>
+							<td><?php echo esc_html( $event->created_at ); ?></td>
+							<td><?php echo esc_html( ucfirst( $event->log_type ) ); ?></td>
+							<td class="severity-<?php echo esc_attr( $event->severity ); ?>">
+								<?php echo esc_html( ucfirst( $event->severity ) ); ?>
+							</td>
+							<td><?php echo esc_html( $event->message ); ?></td>
+							<td><?php echo esc_html( $event->ip_address ); ?></td>
+						</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+				<?php else : ?>
+				<p>No critical events recorded.</p>
+				<?php endif; ?>
+
+				<h2>Blocked IP Addresses</h2>
+				<?php if ( ! empty( $data['blocked_ips'] ) ) : ?>
+				<table>
+					<thead>
+						<tr>
+							<th>IP Address</th>
+							<th>Block Type</th>
+							<th>Reason</th>
+							<th>Blocked At</th>
+							<th>Expires At</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $data['blocked_ips'] as $ip ) : ?>
+						<tr>
+							<td><?php echo esc_html( $ip->ip_address ); ?></td>
+							<td><?php echo esc_html( ucfirst( $ip->block_type ) ); ?></td>
+							<td><?php echo esc_html( $ip->reason ); ?></td>
+							<td><?php echo esc_html( $ip->blocked_at ); ?></td>
+							<td><?php echo esc_html( $ip->expires_at ?? 'Never' ); ?></td>
+						</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+				<?php else : ?>
+				<p>No IP addresses are currently blocked.</p>
+				<?php endif; ?>
+
+				<div class="footer">
+					<p>Generated by WP Harden v<?php echo esc_html( WPH_VERSION ); ?></p>
+				</div>
+			</div>
+		</body>
+		</html>
+		<?php
+		return ob_get_clean();
 	}
 
 	/**

@@ -246,6 +246,75 @@
 			});
 		});
 
+		// Clear Old Logs
+		$('#wph-clear-logs').on('click', function(e) {
+			e.preventDefault();
+			
+			if (!confirm('This will delete old security logs. Continue?')) {
+				return;
+			}
+			
+			var $button = $(this);
+			$button.addClass('wph-loading').prop('disabled', true);
+			
+			$.ajax({
+				url: wphAjax.ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'wph_clear_logs',
+					nonce: wphAjax.nonce
+				},
+				success: function(response) {
+					if (response.success) {
+						alert('✅ Old logs cleared successfully!');
+						location.reload();
+					} else {
+						alert('❌ Failed to clear logs: ' + (response.data.message || 'Unknown error'));
+					}
+				},
+				error: function() {
+					alert('❌ Failed to clear logs. Please try again.');
+				},
+				complete: function() {
+					$button.removeClass('wph-loading').prop('disabled', false);
+				}
+			});
+		});
+
+		// Export Security Report
+		$('#wph-export-report').on('click', function(e) {
+			e.preventDefault();
+			
+			var $button = $(this);
+			$button.addClass('wph-loading').prop('disabled', true);
+			
+			// Create a temporary form and submit it
+			var form = $('<form>', {
+				'method': 'POST',
+				'action': wphAjax.ajaxurl
+			});
+			
+			form.append($('<input>', {
+				'type': 'hidden',
+				'name': 'action',
+				'value': 'wph_export_report'
+			}));
+			
+			form.append($('<input>', {
+				'type': 'hidden',
+				'name': 'nonce',
+				'value': wphAjax.nonce
+			}));
+			
+			$('body').append(form);
+			form.submit();
+			form.remove();
+			
+			setTimeout(function() {
+				$button.removeClass('wph-loading').prop('disabled', false);
+			}, 2000);
+		});
+
 		// Helper functions
 		function ucfirst(str) {
 			return str.charAt(0).toUpperCase() + str.slice(1);

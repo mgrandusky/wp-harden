@@ -35,6 +35,12 @@
 	font-weight: 400;
 }
 
+.wph-stat-content .description {
+	margin: 5px 0 0 0;
+	font-size: 12px;
+	color: #999;
+}
+
 .wph-stat-number {
 	font-size: 32px;
 	font-weight: 700;
@@ -62,6 +68,56 @@
 
 .wph-security-score.critical {
 	color: #d63638;
+}
+
+/* Status Tables */
+.wph-status-table,
+.wph-system-info-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.wph-status-table td,
+.wph-system-info-table td {
+	padding: 8px 12px;
+	border-bottom: 1px solid #efefef;
+}
+
+.wph-status-table tr:last-child td,
+.wph-system-info-table tr:last-child td {
+	border-bottom: none;
+}
+
+.wph-status-badge {
+	display: inline-block;
+	padding: 4px 8px;
+	border-radius: 3px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.wph-status-badge.active {
+	background: #d1f0dc;
+	color: #00a32a;
+}
+
+.wph-status-badge.inactive {
+	background: #ffe5e5;
+	color: #d63638;
+}
+
+/* Issue Count */
+.wph-issue-count {
+	font-weight: 700;
+	font-size: 18px;
+}
+
+.wph-issue-count.has-issues {
+	color: #d63638;
+}
+
+.wph-issue-count.no-issues {
+	color: #00a32a;
 }
 
 /* Panels */
