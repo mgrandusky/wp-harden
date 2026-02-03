@@ -59,6 +59,9 @@ class WPH_Core {
 		require_once WPH_PLUGIN_DIR . 'includes/class-wph-notifications.php';
 		require_once WPH_PLUGIN_DIR . 'includes/class-wph-advanced-auth.php';
 		require_once WPH_PLUGIN_DIR . 'includes/class-wph-hardening.php';
+		require_once WPH_PLUGIN_DIR . 'includes/class-wph-threat-intelligence.php';
+		require_once WPH_PLUGIN_DIR . 'includes/class-wph-file-protection.php';
+		require_once WPH_PLUGIN_DIR . 'includes/class-wph-database-security.php';
 
 		// Admin classes
 		if ( is_admin() ) {
@@ -89,6 +92,15 @@ class WPH_Core {
 
 		// Initialize security hardening
 		$hardening = WPH_Hardening::get_instance();
+
+		// Initialize threat intelligence
+		$threat_intel = WPH_Threat_Intelligence::get_instance();
+
+		// Initialize file protection
+		$file_protection = WPH_File_Protection::get_instance();
+
+		// Initialize database security
+		$db_security = WPH_Database_Security::get_instance();
 
 		// Initialize admin interface
 		if ( is_admin() ) {

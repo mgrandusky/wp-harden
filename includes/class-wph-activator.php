@@ -129,6 +129,51 @@ class WPH_Activator {
 			KEY expires_at (expires_at)
 		) $charset_collate;";
 
+		// Table for threat intelligence
+		$table_threat_intel = $wpdb->prefix . 'wph_threat_intelligence';
+		$sql_threat_intel   = "CREATE TABLE IF NOT EXISTS $table_threat_intel (
+			id bigint(20) NOT NULL AUTO_INCREMENT,
+			ip_address varchar(45) NOT NULL,
+			threat_type varchar(50) NOT NULL,
+			threat_score int(11) NOT NULL DEFAULT 0,
+			threat_data longtext DEFAULT NULL,
+			checked_at datetime NOT NULL,
+			expires_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY ip_threat_type (ip_address(45), threat_type(50)),
+			KEY expires_at (expires_at)
+		) $charset_collate;";
+
+		// Table for file changes
+		$table_file_changes = $wpdb->prefix . 'wph_file_changes';
+		$sql_file_changes   = "CREATE TABLE IF NOT EXISTS $table_file_changes (
+			id bigint(20) NOT NULL AUTO_INCREMENT,
+			file_path varchar(500) NOT NULL,
+			change_type varchar(20) NOT NULL,
+			old_hash varchar(32) DEFAULT NULL,
+			new_hash varchar(32) DEFAULT NULL,
+			file_size bigint(20) DEFAULT NULL,
+			detected_at datetime NOT NULL,
+			is_reviewed tinyint(1) DEFAULT 0,
+			PRIMARY KEY  (id),
+			KEY file_path (file_path(191)),
+			KEY change_type (change_type),
+			KEY detected_at (detected_at)
+		) $charset_collate;";
+
+		// Table for database backups
+		$table_backups = $wpdb->prefix . 'wph_backups';
+		$sql_backups   = "CREATE TABLE IF NOT EXISTS $table_backups (
+			id bigint(20) NOT NULL AUTO_INCREMENT,
+			backup_file varchar(255) NOT NULL,
+			backup_size bigint(20) NOT NULL,
+			is_encrypted tinyint(1) DEFAULT 0,
+			created_at datetime NOT NULL,
+			expires_at datetime DEFAULT NULL,
+			PRIMARY KEY  (id),
+			KEY created_at (created_at)
+		) $charset_collate;";
+
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql_logs );
 		dbDelta( $sql_blocked_ips );
@@ -136,6 +181,9 @@ class WPH_Activator {
 		dbDelta( $sql_scan_results );
 		dbDelta( $sql_2fa_tokens );
 		dbDelta( $sql_sessions );
+		dbDelta( $sql_threat_intel );
+		dbDelta( $sql_file_changes );
+		dbDelta( $sql_backups );
 
 		// Set default options
 		$default_settings = array(
@@ -194,6 +242,37 @@ class WPH_Activator {
 			'hardening_disable_pingbacks' => true,
 			'hardening_force_ssl_admin'  => false,
 			'hardening_disable_app_passwords' => true,
+			// Threat Intelligence settings
+			'threat_intel_enabled'       => true,
+			'threat_intel_abuseipdb_key' => '',
+			'threat_intel_proxycheck_key' => '',
+			'threat_intel_cache_ttl'     => 24, // hours
+			'threat_intel_auto_block'    => true,
+			'threat_intel_block_threshold' => 75,
+			'threat_intel_check_proxies' => true,
+			'threat_intel_check_tor'     => true,
+			// File Protection settings
+			'file_protection_enabled'    => true,
+			'file_monitoring_enabled'    => true,
+			'file_monitoring_scan_interval' => 'daily',
+			'block_executable_uploads'   => true,
+			'directory_listing_protection' => true,
+			'htaccess_hardening'         => true,
+			'wpconfig_protection'        => true,
+			'file_quarantine_enabled'    => true,
+			'monitored_directories'      => array( 'wp-includes', 'wp-admin', 'wp-content/themes', 'wp-content/plugins' ),
+			// Database Security settings
+			'db_security_enabled'        => true,
+			'db_backup_enabled'          => true,
+			'db_backup_schedule'         => 'weekly',
+			'db_backup_retention'        => 30, // days
+			'db_backup_encryption'       => true,
+			'db_backup_encryption_key'   => wp_generate_password( 32, true, true ),
+			'db_optimization_enabled'    => true,
+			'db_query_monitoring'        => false,
+			'db_slow_query_threshold'    => 2.0, // seconds
+			'db_cleanup_revisions'       => true,
+			'db_max_revisions'           => 5,
 		);
 
 		add_option( 'wph_settings', $default_settings );
