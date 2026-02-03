@@ -243,6 +243,22 @@ class WPH_Activator {
 			KEY generated_at (generated_at)
 		) $charset_collate;";
 
+		// Table for ignored issues
+		$table_ignored_issues = $wpdb->prefix . 'wph_ignored_issues';
+		$sql_ignored_issues   = "CREATE TABLE IF NOT EXISTS $table_ignored_issues (
+			id bigint(20) NOT NULL AUTO_INCREMENT,
+			issue_type varchar(50) NOT NULL,
+			issue_key varchar(32) NOT NULL,
+			issue_data longtext DEFAULT NULL,
+			ignored_by bigint(20) NOT NULL,
+			ignored_at datetime NOT NULL,
+			reason varchar(500) DEFAULT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY issue_key (issue_key),
+			KEY issue_type (issue_type),
+			KEY ignored_at (ignored_at)
+		) $charset_collate;";
+
 		// Require dbDelta function
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		
@@ -261,6 +277,7 @@ class WPH_Activator {
 			'vulnerabilities' => $sql_vulnerabilities,
 			'incidents' => $sql_incidents,
 			'compliance' => $sql_compliance,
+			'ignored_issues' => $sql_ignored_issues,
 		);
 
 		foreach ( $tables as $table_name => $sql ) {
