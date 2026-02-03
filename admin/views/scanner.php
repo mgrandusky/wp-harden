@@ -41,12 +41,44 @@ if ( $latest_scan && ! empty( $latest_scan->scan_data ) ) {
 		<h2><?php esc_html_e( 'Run Security Scan', 'wp-harden' ); ?></h2>
 		<p><?php esc_html_e( 'Perform a comprehensive security scan of your WordPress installation.', 'wp-harden' ); ?></p>
 		
-		<button id="wph-run-scan" class="button button-primary button-large">
-			<?php esc_html_e( '🔍 Start Security Scan', 'wp-harden' ); ?>
-		</button>
+		<div class="wph-scan-controls">
+			<button id="wph-run-full-scan" class="button button-primary button-large">
+				<?php esc_html_e( '🔍 Start Full Scan', 'wp-harden' ); ?>
+			</button>
+			<button id="wph-run-quick-scan" class="button button-large">
+				<?php esc_html_e( '⚡ Quick Scan', 'wp-harden' ); ?>
+			</button>
+			
+			<div class="wph-scan-schedule">
+				<?php
+				$settings = WPH_Settings::get_instance();
+				$scan_schedule = $settings->get( 'scan_schedule', 'daily' );
+				?>
+				<label for="scan-schedule-select">
+					<strong><?php esc_html_e( 'Automatic Scans:', 'wp-harden' ); ?></strong>
+				</label>
+				<select id="scan-schedule-select" class="wph-schedule-select">
+					<option value="disabled" <?php selected( $scan_schedule, 'disabled' ); ?>>
+						<?php esc_html_e( 'Disabled', 'wp-harden' ); ?>
+					</option>
+					<option value="daily" <?php selected( $scan_schedule, 'daily' ); ?>>
+						<?php esc_html_e( 'Daily', 'wp-harden' ); ?>
+					</option>
+					<option value="weekly" <?php selected( $scan_schedule, 'weekly' ); ?>>
+						<?php esc_html_e( 'Weekly', 'wp-harden' ); ?>
+					</option>
+					<option value="monthly" <?php selected( $scan_schedule, 'monthly' ); ?>>
+						<?php esc_html_e( 'Monthly', 'wp-harden' ); ?>
+					</option>
+				</select>
+			</div>
+		</div>
 		
 		<div id="wph-scan-progress" style="display: none;">
-			<p><span class="spinner is-active"></span> <?php esc_html_e( 'Scanning... Please wait.', 'wp-harden' ); ?></p>
+			<div class="wph-progress-bar">
+				<div class="wph-progress-fill" style="width: 0%"></div>
+			</div>
+			<p><span class="spinner is-active"></span> <span class="wph-scan-status"><?php esc_html_e( 'Scanning... Please wait.', 'wp-harden' ); ?></span></p>
 		</div>
 		
 		<div id="wph-scan-results" style="display: none;">
@@ -56,9 +88,29 @@ if ( $latest_scan && ! empty( $latest_scan->scan_data ) ) {
 
 	<?php if ( ! empty( $scan_results ) ) : ?>
 	<div class="wph-panel">
-		<h2><?php esc_html_e( 'Latest Scan Results', 'wp-harden' ); ?></h2>
-		<p><strong><?php esc_html_e( 'Scan Date:', 'wp-harden' ); ?></strong> <?php echo esc_html( $latest_scan->completed_at ); ?></p>
-		<p><strong><?php esc_html_e( 'Total Issues:', 'wp-harden' ); ?></strong> <?php echo absint( $latest_scan->issues_found ); ?></p>
+		<div class="wph-panel-header">
+			<h2><?php esc_html_e( 'Latest Scan Results', 'wp-harden' ); ?></h2>
+			<div class="wph-panel-actions">
+				<button id="wph-export-scan" class="button">
+					<?php esc_html_e( '📥 Export Results', 'wp-harden' ); ?>
+				</button>
+				<?php if ( $latest_scan->issues_found > 0 ) : ?>
+				<button id="wph-fix-all-issues" class="button button-primary">
+					<?php esc_html_e( '🔧 Fix All Issues', 'wp-harden' ); ?>
+				</button>
+				<?php endif; ?>
+			</div>
+		</div>
+		
+		<div class="wph-scan-meta">
+			<p><strong><?php esc_html_e( 'Scan Date:', 'wp-harden' ); ?></strong> <?php echo esc_html( $latest_scan->completed_at ); ?></p>
+			<p><strong><?php esc_html_e( 'Scan Type:', 'wp-harden' ); ?></strong> <?php echo esc_html( ucfirst( $latest_scan->scan_type ?? 'full' ) ); ?></p>
+			<p><strong><?php esc_html_e( 'Total Issues:', 'wp-harden' ); ?></strong> 
+				<span class="wph-issue-badge <?php echo $latest_scan->issues_found > 0 ? 'has-issues' : 'no-issues'; ?>">
+					<?php echo absint( $latest_scan->issues_found ); ?>
+				</span>
+			</p>
+		</div>
 
 		<?php foreach ( $scan_results as $scan_type => $result ) : ?>
 			<div class="wph-scan-result">
@@ -74,18 +126,30 @@ if ( $latest_scan && ! empty( $latest_scan->scan_data ) ) {
 					<table class="wp-list-table widefat fixed striped">
 						<thead>
 							<tr>
-								<th><?php esc_html_e( 'Issue', 'wp-harden' ); ?></th>
-								<th><?php esc_html_e( 'Severity', 'wp-harden' ); ?></th>
-								<th><?php esc_html_e( 'Details', 'wp-harden' ); ?></th>
+								<th style="width: 5%">
+									<input type="checkbox" class="wph-select-all-issues">
+								</th>
+								<th style="width: 25%"><?php esc_html_e( 'Issue', 'wp-harden' ); ?></th>
+								<th style="width: 10%"><?php esc_html_e( 'Severity', 'wp-harden' ); ?></th>
+								<th style="width: 40%"><?php esc_html_e( 'Details', 'wp-harden' ); ?></th>
+								<th style="width: 20%"><?php esc_html_e( 'Action', 'wp-harden' ); ?></th>
 							</tr>
 						</thead>
 						<tbody>
-							<?php foreach ( $result['issues'] as $issue ) : ?>
+							<?php foreach ( $result['issues'] as $idx => $issue ) : ?>
 								<tr>
+									<td>
+										<input type="checkbox" class="wph-issue-checkbox" data-issue-id="<?php echo esc_attr( $idx ); ?>">
+									</td>
 									<td>
 										<strong><?php echo esc_html( $issue['issue'] ?? 'Security Issue' ); ?></strong>
 										<?php if ( isset( $issue['file'] ) ) : ?>
-											<br><code><?php echo esc_html( $issue['file'] ); ?></code>
+											<br><code class="wph-file-path"><?php echo esc_html( $issue['file'] ); ?></code>
+										<?php endif; ?>
+										<?php if ( isset( $issue['cve'] ) ) : ?>
+											<br><a href="https://nvd.nist.gov/vuln/detail/<?php echo esc_attr( $issue['cve'] ); ?>" target="_blank" class="wph-cve-link">
+												<?php echo esc_html( $issue['cve'] ); ?>
+											</a>
 										<?php endif; ?>
 									</td>
 									<td>
@@ -97,19 +161,47 @@ if ( $latest_scan && ! empty( $latest_scan->scan_data ) ) {
 									</td>
 									<td>
 										<?php if ( isset( $issue['recommendation'] ) ) : ?>
-											<em><?php echo esc_html( $issue['recommendation'] ); ?></em>
+											<div class="wph-recommendation">
+												<em><?php echo esc_html( $issue['recommendation'] ); ?></em>
+											</div>
 										<?php endif; ?>
 										<?php if ( isset( $issue['current'] ) ) : ?>
-											<br><strong><?php esc_html_e( 'Current:', 'wp-harden' ); ?></strong> <?php echo esc_html( $issue['current'] ); ?>
+											<div class="wph-detail-item">
+												<strong><?php esc_html_e( 'Current:', 'wp-harden' ); ?></strong> <?php echo esc_html( $issue['current'] ); ?>
+											</div>
 										<?php endif; ?>
 										<?php if ( isset( $issue['expected'] ) ) : ?>
-											<br><strong><?php esc_html_e( 'Expected:', 'wp-harden' ); ?></strong> <?php echo esc_html( $issue['expected'] ); ?>
+											<div class="wph-detail-item">
+												<strong><?php esc_html_e( 'Expected:', 'wp-harden' ); ?></strong> <?php echo esc_html( $issue['expected'] ); ?>
+											</div>
+										<?php endif; ?>
+									</td>
+									<td>
+										<button class="button button-small wph-fix-issue" data-issue-id="<?php echo esc_attr( $idx ); ?>">
+											<?php esc_html_e( 'Fix', 'wp-harden' ); ?>
+										</button>
+										<button class="button button-small wph-ignore-issue" data-issue-id="<?php echo esc_attr( $idx ); ?>">
+											<?php esc_html_e( 'Ignore', 'wp-harden' ); ?>
+										</button>
+										<?php if ( isset( $issue['file'] ) ) : ?>
+										<button class="button button-small wph-quarantine-file" data-file="<?php echo esc_attr( $issue['file'] ); ?>">
+											<?php esc_html_e( 'Quarantine', 'wp-harden' ); ?>
+										</button>
 										<?php endif; ?>
 									</td>
 								</tr>
 							<?php endforeach; ?>
 						</tbody>
 					</table>
+					
+					<div class="wph-bulk-actions">
+						<button class="button wph-fix-selected">
+							<?php esc_html_e( '🔧 Fix Selected', 'wp-harden' ); ?>
+						</button>
+						<button class="button wph-ignore-selected">
+							<?php esc_html_e( '👁️ Ignore Selected', 'wp-harden' ); ?>
+						</button>
+					</div>
 				<?php else : ?>
 					<p class="wph-success">✅ <?php esc_html_e( 'No issues found in this scan.', 'wp-harden' ); ?></p>
 				<?php endif; ?>
@@ -130,6 +222,7 @@ if ( $latest_scan && ! empty( $latest_scan->scan_data ) ) {
 					<th><?php esc_html_e( 'Issues Found', 'wp-harden' ); ?></th>
 					<th><?php esc_html_e( 'Started', 'wp-harden' ); ?></th>
 					<th><?php esc_html_e( 'Completed', 'wp-harden' ); ?></th>
+					<th><?php esc_html_e( 'Actions', 'wp-harden' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -142,9 +235,18 @@ if ( $latest_scan && ! empty( $latest_scan->scan_data ) ) {
 								<?php echo esc_html( ucfirst( $scan->status ) ); ?>
 							</span>
 						</td>
-						<td><?php echo absint( $scan->issues_found ); ?></td>
+						<td>
+							<span class="wph-issue-badge <?php echo $scan->issues_found > 0 ? 'has-issues' : 'no-issues'; ?>">
+								<?php echo absint( $scan->issues_found ); ?>
+							</span>
+						</td>
 						<td><?php echo esc_html( $scan->started_at ); ?></td>
 						<td><?php echo esc_html( $scan->completed_at ?? '-' ); ?></td>
+						<td>
+							<button class="button button-small wph-view-scan" data-scan-id="<?php echo absint( $scan->id ); ?>">
+								<?php esc_html_e( 'View Details', 'wp-harden' ); ?>
+							</button>
+						</td>
 					</tr>
 				<?php endforeach; ?>
 			</tbody>

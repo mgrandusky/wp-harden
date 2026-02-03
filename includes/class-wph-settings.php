@@ -101,6 +101,26 @@ class WPH_Settings {
 			'rate_limit_enabled',
 			'strong_password_enforcement',
 			'prevent_username_enumeration',
+			'sql_injection_protection',
+			'xss_protection',
+			'file_inclusion_protection',
+			'enable_captcha',
+			'twofa_enabled',
+			'twofa_force_admins',
+			'twofa_force_editors',
+			'twofa_backup_codes',
+			'database_backups_enabled',
+			'database_encryption',
+			'query_monitoring',
+			'auto_optimize_database',
+			'disable_xmlrpc',
+			'disable_file_editing',
+			'remove_wp_version',
+			'enable_security_headers',
+			'disable_rest_api_unauth',
+			'force_ssl_admin',
+			'disable_pingbacks',
+			'debug_mode',
 		);
 
 		foreach ( $boolean_fields as $field ) {
@@ -108,16 +128,48 @@ class WPH_Settings {
 		}
 
 		// String settings
-		if ( isset( $input['firewall_sensitivity'] ) ) {
-			$sanitized['firewall_sensitivity'] = sanitize_text_field( $input['firewall_sensitivity'] );
+		$string_fields = array(
+			'firewall_sensitivity',
+			'scan_schedule',
+			'security_level',
+			'captcha_type',
+			'backup_frequency',
+		);
+
+		foreach ( $string_fields as $field ) {
+			if ( isset( $input[ $field ] ) ) {
+				$sanitized[ $field ] = sanitize_text_field( $input[ $field ] );
+			}
 		}
 
-		if ( isset( $input['scan_schedule'] ) ) {
-			$sanitized['scan_schedule'] = sanitize_text_field( $input['scan_schedule'] );
-		}
-
+		// Email field
 		if ( isset( $input['notification_email'] ) ) {
 			$sanitized['notification_email'] = sanitize_email( $input['notification_email'] );
+		}
+
+		// API Keys (sensitive data)
+		$api_key_fields = array(
+			'abuseipdb_api_key',
+			'wpscan_api_key',
+			'maxmind_license_key',
+			'virustotal_api_key',
+			'recaptcha_site_key',
+			'recaptcha_secret_key',
+		);
+
+		foreach ( $api_key_fields as $field ) {
+			if ( isset( $input[ $field ] ) ) {
+				$sanitized[ $field ] = sanitize_text_field( $input[ $field ] );
+			}
+		}
+
+		// Textarea fields
+		if ( isset( $input['custom_firewall_rules'] ) ) {
+			$sanitized['custom_firewall_rules'] = sanitize_textarea_field( $input['custom_firewall_rules'] );
+		}
+
+		if ( isset( $input['excluded_urls'] ) ) {
+			$sanitized['excluded_urls'] = sanitize_textarea_field( $input['excluded_urls'] );
 		}
 
 		// Integer settings
@@ -127,6 +179,11 @@ class WPH_Settings {
 			'log_retention_days',
 			'rate_limit_requests',
 			'rate_limit_period',
+			'rate_limit_lockout',
+			'twofa_backup_codes_count',
+			'twofa_grace_period',
+			'twofa_qr_size',
+			'backup_retention_days',
 		);
 
 		foreach ( $integer_fields as $field ) {

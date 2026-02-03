@@ -35,6 +35,12 @@
 	font-weight: 400;
 }
 
+.wph-stat-content .description {
+	margin: 5px 0 0 0;
+	font-size: 12px;
+	color: #999;
+}
+
 .wph-stat-number {
 	font-size: 32px;
 	font-weight: 700;
@@ -62,6 +68,56 @@
 
 .wph-security-score.critical {
 	color: #d63638;
+}
+
+/* Status Tables */
+.wph-status-table,
+.wph-system-info-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.wph-status-table td,
+.wph-system-info-table td {
+	padding: 8px 12px;
+	border-bottom: 1px solid #efefef;
+}
+
+.wph-status-table tr:last-child td,
+.wph-system-info-table tr:last-child td {
+	border-bottom: none;
+}
+
+.wph-status-badge {
+	display: inline-block;
+	padding: 4px 8px;
+	border-radius: 3px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.wph-status-badge.active {
+	background: #d1f0dc;
+	color: #00a32a;
+}
+
+.wph-status-badge.inactive {
+	background: #ffe5e5;
+	color: #d63638;
+}
+
+/* Issue Count */
+.wph-issue-count {
+	font-weight: 700;
+	font-size: 18px;
+}
+
+.wph-issue-count.has-issues {
+	color: #d63638;
+}
+
+.wph-issue-count.no-issues {
+	color: #00a32a;
 }
 
 /* Panels */
@@ -197,19 +253,115 @@
 	padding: 15px;
 	border-radius: 4px;
 	margin-bottom: 20px;
+}
+
+.wph-filter-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 15px;
+}
+
+.wph-filter-header h3 {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 600;
+	color: #333;
+}
+
+.wph-filter-actions {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.wph-filter-row {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 15px;
+	margin-bottom: 15px;
+}
+
+.wph-filter-field {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+
+.wph-filter-field label {
+	font-weight: 600;
+	font-size: 13px;
+	color: #666;
+}
+
+.wph-filter-field select,
+.wph-search-input {
+	min-width: 150px;
+	padding: 6px 10px;
+}
+
+.wph-filter-buttons {
 	display: flex;
 	gap: 10px;
-	align-items: center;
 	flex-wrap: wrap;
+	padding-top: 10px;
+	border-top: 1px solid #ddd;
 }
 
-.wph-filter-form label {
+.wph-log-stats {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin: 15px 0;
+	padding: 10px 15px;
+	background: #fff;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+}
+
+.wph-active-filters {
+	color: #2271b1;
 	font-weight: 600;
-	margin-right: 5px;
 }
 
-.wph-filter-form select {
-	min-width: 150px;
+/* Log Message */
+.wph-log-message {
+	max-width: 400px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* IP Address Display */
+.wph-ip-address {
+	font-family: monospace;
+	font-size: 12px;
+	background: #f5f5f5;
+	padding: 2px 6px;
+	border-radius: 3px;
+	display: block;
+	margin-bottom: 5px;
+}
+
+.wph-ip-actions {
+	display: flex;
+	gap: 5px;
+	align-items: center;
+}
+
+.wph-ip-lookup {
+	text-decoration: none;
+	font-size: 16px;
+	cursor: pointer;
+}
+
+.wph-block-ip-btn {
+	background: none;
+	border: none;
+	padding: 0;
+	font-size: 16px;
+	cursor: pointer;
+	line-height: 1;
 }
 
 /* Log Count */
@@ -296,6 +448,146 @@
 	margin: 0 10px 0 0;
 }
 
+/* Scanner Controls */
+.wph-scan-controls {
+	display: flex;
+	gap: 15px;
+	align-items: center;
+	margin: 20px 0;
+	flex-wrap: wrap;
+}
+
+.wph-scan-schedule {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.wph-schedule-select {
+	min-width: 120px;
+}
+
+/* Progress Bar */
+.wph-progress-bar {
+	width: 100%;
+	height: 30px;
+	background: #e5e5e5;
+	border-radius: 4px;
+	overflow: hidden;
+	margin: 20px 0 10px 0;
+}
+
+.wph-progress-fill {
+	height: 100%;
+	background: linear-gradient(90deg, #2271b1 0%, #00a32a 100%);
+	transition: width 0.3s ease;
+}
+
+/* Panel Header */
+.wph-panel-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #efefef;
+	margin-bottom: 20px;
+}
+
+.wph-panel-header h2 {
+	margin: 0;
+	border: none;
+	padding: 0;
+}
+
+.wph-panel-actions {
+	display: flex;
+	gap: 10px;
+}
+
+/* Scan Meta */
+.wph-scan-meta {
+	background: #f9f9f9;
+	padding: 15px;
+	border-radius: 4px;
+	margin-bottom: 20px;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 15px;
+}
+
+.wph-scan-meta p {
+	margin: 0;
+}
+
+/* Issue Badge */
+.wph-issue-badge {
+	display: inline-block;
+	padding: 4px 10px;
+	border-radius: 3px;
+	font-weight: 700;
+	font-size: 14px;
+}
+
+.wph-issue-badge.has-issues {
+	background: #ffe5e5;
+	color: #d63638;
+}
+
+.wph-issue-badge.no-issues {
+	background: #d1f0dc;
+	color: #00a32a;
+}
+
+/* File Path */
+.wph-file-path {
+	font-size: 12px;
+	background: #f5f5f5;
+	padding: 2px 6px;
+	border-radius: 3px;
+	font-family: monospace;
+}
+
+/* CVE Link */
+.wph-cve-link {
+	font-weight: 600;
+	color: #d63638;
+	text-decoration: none;
+}
+
+.wph-cve-link:hover {
+	text-decoration: underline;
+}
+
+/* Recommendation */
+.wph-recommendation {
+	padding: 8px;
+	background: #fff3cd;
+	border-left: 3px solid #dba617;
+	margin: 5px 0;
+	font-size: 13px;
+}
+
+/* Detail Item */
+.wph-detail-item {
+	margin: 5px 0;
+	font-size: 13px;
+}
+
+/* Bulk Actions */
+.wph-bulk-actions {
+	margin-top: 15px;
+	padding-top: 15px;
+	border-top: 1px solid #efefef;
+	display: flex;
+	gap: 10px;
+}
+
+/* Select All */
+.wph-select-all-issues {
+	cursor: pointer;
+}
+
 /* Form Tables */
 .form-table th {
 	font-weight: 600;
@@ -304,4 +596,69 @@
 .form-table .description {
 	color: #666;
 	font-size: 13px;
+}
+
+/* Notice Box */
+.wph-notice {
+	background: #e7f5ff;
+	border-left: 4px solid #2271b1;
+	padding: 15px 20px;
+	margin: 20px 0;
+}
+
+.wph-notice h3 {
+	margin-top: 0;
+	color: #2271b1;
+}
+
+.wph-notice ol {
+	margin: 10px 0 0 20px;
+}
+
+/* API Test Buttons */
+.wph-test-api,
+.wph-download-geoip {
+	margin-top: 10px;
+}
+
+/* Button Groups */
+.button + .button {
+	margin-left: 5px;
+}
+
+/* Help Icon */
+.wph-help-icon {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	line-height: 16px;
+	text-align: center;
+	background: #2271b1;
+	color: #fff;
+	border-radius: 50%;
+	font-size: 12px;
+	cursor: help;
+	margin-left: 5px;
+}
+
+/* Loading State */
+.wph-loading {
+	opacity: 0.6;
+	pointer-events: none;
+}
+
+.wph-loading::after {
+	content: '';
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	margin-left: 8px;
+	border: 2px solid #ccc;
+	border-top-color: #2271b1;
+	border-radius: 50%;
+	animation: wph-spin 0.6s linear infinite;
+}
+
+@keyframes wph-spin {
+	to { transform: rotate(360deg); }
 }
