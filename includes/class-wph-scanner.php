@@ -148,10 +148,13 @@ class WPH_Scanner {
 			);
 		}
 
+		// Filter out ignored issues
+		$filtered_issues = $this->filter_ignored_issues( 'core_integrity', $issues );
+
 		return array(
 			'scan_type' => 'core_integrity',
-			'status'    => empty( $issues ) ? 'passed' : 'failed',
-			'issues'    => $issues,
+			'status'    => empty( $filtered_issues ) ? 'passed' : 'failed',
+			'issues'    => $filtered_issues,
 		);
 	}
 
@@ -201,10 +204,13 @@ class WPH_Scanner {
 			}
 		}
 
+		// Filter out ignored issues
+		$filtered_issues = $this->filter_ignored_issues( 'file_permissions', $issues );
+
 		return array(
 			'scan_type' => 'file_permissions',
-			'status'    => empty( $issues ) ? 'passed' : 'failed',
-			'issues'    => $issues,
+			'status'    => empty( $filtered_issues ) ? 'passed' : 'failed',
+			'issues'    => $filtered_issues,
 		);
 	}
 
@@ -245,10 +251,13 @@ class WPH_Scanner {
 			}
 		}
 
+		// Filter out ignored issues
+		$filtered_issues = $this->filter_ignored_issues( 'malware_signatures', $issues );
+
 		return array(
 			'scan_type' => 'malware_signatures',
-			'status'    => empty( $issues ) ? 'passed' : 'failed',
-			'issues'    => $issues,
+			'status'    => empty( $filtered_issues ) ? 'passed' : 'failed',
+			'issues'    => $filtered_issues,
 		);
 	}
 
@@ -288,10 +297,13 @@ class WPH_Scanner {
 			);
 		}
 
+		// Filter out ignored issues
+		$filtered_issues = $this->filter_ignored_issues( 'database_security', $issues );
+
 		return array(
 			'scan_type' => 'database_security',
-			'status'    => empty( $issues ) ? 'passed' : 'failed',
-			'issues'    => $issues,
+			'status'    => empty( $filtered_issues ) ? 'passed' : 'failed',
+			'issues'    => $filtered_issues,
 		);
 	}
 
@@ -627,5 +639,30 @@ class WPH_Scanner {
 		);
 		
 		return $count > 0;
+	}
+
+	/**
+	 * Filter out ignored issues from scan results
+	 *
+	 * @param string $issue_type Type of scan
+	 * @param array  $issues     Array of detected issues
+	 * @return array Filtered issues (non-ignored only)
+	 * @since 1.0.0
+	 */
+	private function filter_ignored_issues( $issue_type, $issues ) {
+		if ( empty( $issues ) ) {
+			return $issues;
+		}
+		
+		$filtered_issues = array();
+		
+		foreach ( $issues as $issue ) {
+			// Check if this specific issue has been ignored
+			if ( ! $this->is_issue_ignored( $issue_type, $issue ) ) {
+				$filtered_issues[] = $issue;
+			}
+		}
+		
+		return $filtered_issues;
 	}
 }
