@@ -317,14 +317,27 @@ class WPH_IP_Manager {
 	public function get_client_ip() {
 		$ip = '';
 
-		// Check for Cloudflare
+		// Check for Cloudflare (most trusted)
 		if ( ! empty( $_SERVER['HTTP_CF_CONNECTING_IP'] ) ) {
 			$ip = sanitize_text_field( wp_unslash( $_SERVER['HTTP_CF_CONNECTING_IP'] ) );
 		}
-		// Check for proxy
+		// Check for proxy - use last trusted IP to prevent spoofing
 		elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
 			$ip_list = explode( ',', sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) );
-			$ip = trim( $ip_list[0] );
+			// Reverse the list to get the last (most trusted) IP
+			$ip_list = array_reverse( array_map( 'trim', $ip_list ) );
+			// Find first valid public IP
+			foreach ( $ip_list as $potential_ip ) {
+				$validated_ip = filter_var( $potential_ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE );
+				if ( $validated_ip ) {
+					$ip = $validated_ip;
+					break;
+				}
+			}
+			// If no public IP found, use the first one (original behavior as fallback)
+			if ( empty( $ip ) && ! empty( $ip_list ) ) {
+				$ip = $ip_list[ count( $ip_list ) - 1 ]; // First in original list
+			}
 		}
 		// Check for other proxy headers
 		elseif ( ! empty( $_SERVER['HTTP_X_REAL_IP'] ) ) {

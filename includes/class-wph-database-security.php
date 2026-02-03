@@ -170,8 +170,7 @@ class WPH_Database_Security {
 		$htaccess = $this->backup_dir . '/.htaccess';
 		if ( ! file_exists( $htaccess ) ) {
 			$content = "Order deny,allow\nDeny from all";
-			// Use @ to suppress warnings if file creation fails
-			if ( false === @file_put_contents( $htaccess, $content ) ) {
+			if ( false === file_put_contents( $htaccess, $content ) ) {
 				error_log( 'WP Harden: Failed to create .htaccess in backup directory' );
 			}
 		}
@@ -179,8 +178,7 @@ class WPH_Database_Security {
 		// Create index.php to prevent directory listing
 		$index = $this->backup_dir . '/index.php';
 		if ( ! file_exists( $index ) ) {
-			// Use @ to suppress warnings if file creation fails
-			if ( false === @file_put_contents( $index, '<?php // Silence is golden' ) ) {
+			if ( false === file_put_contents( $index, '<?php // Silence is golden' ) ) {
 				error_log( 'WP Harden: Failed to create index.php in backup directory' );
 			}
 		}
