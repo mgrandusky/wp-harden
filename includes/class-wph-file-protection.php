@@ -591,7 +591,8 @@ class WPH_File_Protection {
 	 * @return bool True if Apache server.
 	 */
 	private function is_apache_server() {
-		return strpos( $_SERVER['SERVER_SOFTWARE'], 'Apache' ) !== false || function_exists( 'apache_get_version' );
+		$server_software = isset( $_SERVER['SERVER_SOFTWARE'] ) ? $_SERVER['SERVER_SOFTWARE'] : '';
+		return strpos( $server_software, 'Apache' ) !== false || function_exists( 'apache_get_version' );
 	}
 
 	/**

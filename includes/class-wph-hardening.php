@@ -703,9 +703,13 @@ class WPH_Hardening {
 
 		// Redirect admin requests to HTTPS
 		if ( is_admin() && ! is_ssl() ) {
-			$redirect_url = 'https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-			wp_safe_redirect( $redirect_url, 301 );
-			exit;
+			$host        = isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
+			$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+			if ( $host && $request_uri ) {
+				$redirect_url = 'https://' . $host . $request_uri;
+				wp_safe_redirect( $redirect_url, 301 );
+				exit;
+			}
 		}
 	}
 

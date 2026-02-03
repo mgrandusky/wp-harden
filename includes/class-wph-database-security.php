@@ -229,6 +229,15 @@ class WPH_Database_Security {
 
 			// Validate table names to prevent SQL injection
 			if ( ! preg_match( '/^[a-zA-Z0-9_]+$/', $old_table ) || ! preg_match( '/^[a-zA-Z0-9_]+$/', $new_table ) ) {
+				$this->logger->log(
+					'database',
+					'high',
+					"Invalid table name detected during prefix change: {$old_table} -> {$new_table}",
+					array(
+						'old_table' => $old_table,
+						'new_table' => $new_table,
+					)
+				);
 				continue;
 			}
 
