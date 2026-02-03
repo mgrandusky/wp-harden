@@ -1,0 +1,307 @@
+/**
+ * Admin Styles
+ * 
+ * @package WP_Harden
+ * @since 1.0.0
+ */
+
+/* Dashboard Stats Grid */
+.wph-stats-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+	gap: 20px;
+	margin: 20px 0;
+}
+
+.wph-stat-card {
+	background: #fff;
+	border: 1px solid #ccd0d4;
+	border-radius: 4px;
+	padding: 20px;
+	display: flex;
+	align-items: center;
+	gap: 15px;
+}
+
+.wph-stat-icon {
+	font-size: 40px;
+	line-height: 1;
+}
+
+.wph-stat-content h3 {
+	margin: 0 0 10px 0;
+	font-size: 14px;
+	color: #666;
+	font-weight: 400;
+}
+
+.wph-stat-number {
+	font-size: 32px;
+	font-weight: 700;
+	color: #2271b1;
+	line-height: 1;
+}
+
+.wph-stat-number.critical {
+	color: #d63638;
+}
+
+.wph-security-score {
+	font-size: 32px;
+	font-weight: 700;
+	line-height: 1;
+}
+
+.wph-security-score.good {
+	color: #00a32a;
+}
+
+.wph-security-score.warning {
+	color: #dba617;
+}
+
+.wph-security-score.critical {
+	color: #d63638;
+}
+
+/* Panels */
+.wph-panel {
+	background: #fff;
+	border: 1px solid #ccd0d4;
+	border-radius: 4px;
+	padding: 20px;
+	margin: 20px 0;
+}
+
+.wph-panel h2 {
+	margin-top: 0;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #efefef;
+}
+
+/* Grid Layouts */
+.wph-grid-2col {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+	gap: 20px;
+	margin: 20px 0;
+}
+
+/* Severity Badges */
+.wph-severity {
+	display: inline-block;
+	padding: 4px 8px;
+	border-radius: 3px;
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: uppercase;
+}
+
+.wph-severity-low {
+	background: #e7f5ff;
+	color: #0073aa;
+}
+
+.wph-severity-medium {
+	background: #fff3cd;
+	color: #856404;
+}
+
+.wph-severity-high {
+	background: #ffe5e5;
+	color: #d63638;
+}
+
+.wph-severity-critical {
+	background: #d63638;
+	color: #fff;
+}
+
+/* Status Badges */
+.wph-status,
+.wph-badge {
+	display: inline-block;
+	padding: 4px 8px;
+	border-radius: 3px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.wph-status-completed,
+.wph-badge-login {
+	background: #00a32a;
+	color: #fff;
+}
+
+.wph-status-running {
+	background: #dba617;
+	color: #fff;
+}
+
+.wph-status-failed {
+	background: #d63638;
+	color: #fff;
+}
+
+.wph-badge-firewall {
+	background: #2271b1;
+	color: #fff;
+}
+
+.wph-badge-scanner {
+	background: #9b51e0;
+	color: #fff;
+}
+
+.wph-badge-temporary {
+	background: #fff3cd;
+	color: #856404;
+}
+
+.wph-badge-permanent {
+	background: #d63638;
+	color: #fff;
+}
+
+/* Quick Actions */
+.wph-quick-actions {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+	margin-top: 20px;
+}
+
+/* Scan Results */
+.wph-scan-result {
+	background: #f9f9f9;
+	border-left: 4px solid #2271b1;
+	padding: 15px;
+	margin: 15px 0;
+}
+
+.wph-scan-summary {
+	background: #f9f9f9;
+	padding: 15px;
+	border-radius: 4px;
+	margin: 15px 0;
+}
+
+.wph-success {
+	color: #00a32a;
+	font-weight: 600;
+}
+
+/* Filter Form */
+.wph-filter-form {
+	background: #f9f9f9;
+	padding: 15px;
+	border-radius: 4px;
+	margin-bottom: 20px;
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.wph-filter-form label {
+	font-weight: 600;
+	margin-right: 5px;
+}
+
+.wph-filter-form select {
+	min-width: 150px;
+}
+
+/* Log Count */
+.wph-log-count {
+	color: #666;
+	font-style: italic;
+	margin: 10px 0;
+}
+
+/* IP List */
+.wph-ip-list {
+	list-style: none;
+	padding: 0;
+	margin: 15px 0;
+}
+
+.wph-ip-list li {
+	padding: 8px;
+	background: #f9f9f9;
+	margin-bottom: 5px;
+	border-radius: 3px;
+}
+
+/* Links */
+.wph-link-small {
+	font-size: 12px;
+	text-decoration: none;
+}
+
+/* Tabs */
+.wph-tabs {
+	margin-top: 20px;
+}
+
+.wph-tab-content {
+	display: none;
+	background: #fff;
+	border: 1px solid #ccd0d4;
+	border-top: none;
+	padding: 20px;
+}
+
+.wph-tab-active {
+	display: block;
+}
+
+.nav-tab-wrapper {
+	border-bottom: 1px solid #ccd0d4;
+	margin: 0;
+	padding: 0;
+}
+
+/* Responsive */
+@media (max-width: 782px) {
+	.wph-stats-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.wph-grid-2col {
+		grid-template-columns: 1fr;
+	}
+
+	.wph-quick-actions {
+		flex-direction: column;
+	}
+
+	.wph-quick-actions .button {
+		width: 100%;
+	}
+
+	.wph-filter-form {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.wph-filter-form select {
+		width: 100%;
+	}
+}
+
+/* Loading Spinner */
+#wph-scan-progress .spinner {
+	float: none;
+	margin: 0 10px 0 0;
+}
+
+/* Form Tables */
+.form-table th {
+	font-weight: 600;
+}
+
+.form-table .description {
+	color: #666;
+	font-size: 13px;
+}
