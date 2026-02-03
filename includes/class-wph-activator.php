@@ -177,6 +177,23 @@ class WPH_Activator {
 			'max_concurrent_sessions'    => 3,
 			'password_expiry_days'       => 90,
 			'password_history_count'     => 5,
+			// Security Hardening settings
+			'hardening_disable_xmlrpc'   => true,
+			'hardening_disable_file_edit' => true,
+			'hardening_disable_file_mods' => false,
+			'hardening_hide_wp_version'  => true,
+			'hardening_security_headers' => true,
+			'hardening_csp_policy'       => "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';",
+			'hardening_xframe_options'   => 'SAMEORIGIN',
+			'hardening_referrer_policy'  => 'strict-origin-when-cross-origin',
+			'hardening_disable_rest_api' => false,
+			'hardening_rest_whitelist'   => array(),
+			'hardening_remove_meta_tags' => true,
+			'hardening_disable_user_enum' => true,
+			'hardening_hide_login_errors' => true,
+			'hardening_disable_pingbacks' => true,
+			'hardening_force_ssl_admin'  => false,
+			'hardening_disable_app_passwords' => true,
 		);
 
 		add_option( 'wph_settings', $default_settings );
