@@ -67,6 +67,8 @@ class WPH_Admin {
 		add_action( 'wp_ajax_wph_ignore_issue', array( $this, 'ajax_ignore_issue' ) );
 		add_action( 'wp_ajax_wph_bulk_fix', array( $this, 'ajax_bulk_fix' ) );
 		add_action( 'wp_ajax_wph_bulk_ignore', array( $this, 'ajax_bulk_ignore' ) );
+		add_action( 'wp_ajax_wph_get_log_details', array( $this, 'ajax_get_log_details' ) );
+		add_action( 'wp_ajax_wph_delete_logs', array( $this, 'ajax_delete_logs' ) );
 	}
 
 	/**
@@ -858,6 +860,108 @@ class WPH_Admin {
 		wp_send_json_success( array(
 			'message' => sprintf( __( 'Ignored %d issues.', 'wp-harden' ), $ignored_count ),
 			'ignored' => $ignored_count
+		) );
+	}
+
+	/**
+	 * AJAX handler to get log details
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_get_log_details() {
+		check_ajax_referer( 'wph_ajax_nonce', 'nonce' );
+		
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-harden' ) ) );
+		}
+		
+		$log_id = isset( $_POST['log_id'] ) ? absint( $_POST['log_id'] ) : 0;
+		
+		if ( empty( $log_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid log ID.', 'wp-harden' ) ) );
+		}
+		
+		global $wpdb;
+		$table = $wpdb->prefix . 'wph_logs';
+		
+		$log = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM $table WHERE id = %d",
+				$log_id
+			)
+		);
+		
+		if ( ! $log ) {
+			wp_send_json_error( array( 'message' => __( 'Log not found.', 'wp-harden' ) ) );
+		}
+		
+		// Parse context JSON if it exists
+		if ( ! empty( $log->metadata ) ) {
+			$log->context = json_decode( $log->metadata, true );
+		}
+		
+		// Get user info if user_id exists
+		if ( ! empty( $log->user_id ) ) {
+			$user = get_userdata( $log->user_id );
+			$log->user_login = $user ? $user->user_login : __( 'Unknown', 'wp-harden' );
+			$log->user_email = $user ? $user->user_email : '';
+		}
+		
+		wp_send_json_success( array( 'log' => $log ) );
+	}
+
+	/**
+	 * AJAX handler to delete logs
+	 *
+	 * @since 1.0.0
+	 */
+	public function ajax_delete_logs() {
+		check_ajax_referer( 'wph_ajax_nonce', 'nonce' );
+		
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'wp-harden' ) ) );
+		}
+		
+		$log_ids = isset( $_POST['log_ids'] ) ? array_map( 'absint', $_POST['log_ids'] ) : array();
+		
+		if ( empty( $log_ids ) ) {
+			wp_send_json_error( array( 'message' => __( 'No logs selected.', 'wp-harden' ) ) );
+		}
+		
+		global $wpdb;
+		$table = $wpdb->prefix . 'wph_logs';
+		
+		// Sanitize IDs
+		$ids_placeholder = implode( ',', array_fill( 0, count( $log_ids ), '%d' ) );
+		
+		// Delete logs
+		$deleted = $wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM $table WHERE id IN ($ids_placeholder)",
+				...$log_ids
+			)
+		);
+		
+		if ( false === $deleted ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to delete logs.', 'wp-harden' ) ) );
+		}
+		
+		// Log the deletion action
+		$logger = WPH_Logger::get_instance();
+		$logger->log(
+			'admin',
+			'low',
+			sprintf( __( 'Deleted %d log entries', 'wp-harden' ), $deleted ),
+			array(
+				'deleted_count' => $deleted,
+				'log_ids' => $log_ids,
+				'user_id' => get_current_user_id()
+			)
+		);
+		
+		wp_send_json_success( array(
+			'message' => sprintf( __( 'Successfully deleted %d log(s).', 'wp-harden' ), $deleted ),
+			'deleted' => $deleted
 		) );
 	}
 }
