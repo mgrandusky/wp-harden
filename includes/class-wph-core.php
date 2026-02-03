@@ -57,6 +57,7 @@ class WPH_Core {
 		require_once WPH_PLUGIN_DIR . 'includes/class-wph-login-security.php';
 		require_once WPH_PLUGIN_DIR . 'includes/class-wph-scanner.php';
 		require_once WPH_PLUGIN_DIR . 'includes/class-wph-notifications.php';
+		require_once WPH_PLUGIN_DIR . 'includes/class-wph-advanced-auth.php';
 
 		// Admin classes
 		if ( is_admin() ) {
@@ -81,6 +82,9 @@ class WPH_Core {
 
 		// Initialize scanner
 		$scanner = WPH_Scanner::get_instance();
+
+		// Initialize advanced authentication
+		$advanced_auth = WPH_Advanced_Auth::get_instance();
 
 		// Initialize admin interface
 		if ( is_admin() ) {

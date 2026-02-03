@@ -98,11 +98,44 @@ class WPH_Activator {
 			KEY started_at (started_at)
 		) $charset_collate;";
 
+		// Table for 2FA tokens
+		$table_2fa_tokens = $wpdb->prefix . 'wph_2fa_tokens';
+		$sql_2fa_tokens   = "CREATE TABLE IF NOT EXISTS $table_2fa_tokens (
+			id bigint(20) NOT NULL AUTO_INCREMENT,
+			user_id bigint(20) NOT NULL,
+			secret_key varchar(255) NOT NULL,
+			is_enabled tinyint(1) NOT NULL DEFAULT 0,
+			backup_codes longtext DEFAULT NULL,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY user_id (user_id)
+		) $charset_collate;";
+
+		// Table for sessions
+		$table_sessions = $wpdb->prefix . 'wph_sessions';
+		$sql_sessions   = "CREATE TABLE IF NOT EXISTS $table_sessions (
+			id bigint(20) NOT NULL AUTO_INCREMENT,
+			user_id bigint(20) NOT NULL,
+			session_token varchar(255) NOT NULL,
+			ip_address varchar(45) NOT NULL,
+			user_agent text DEFAULT NULL,
+			device_fingerprint varchar(255) DEFAULT NULL,
+			created_at datetime NOT NULL,
+			last_activity datetime NOT NULL,
+			expires_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY session_token (session_token),
+			KEY user_id (user_id),
+			KEY expires_at (expires_at)
+		) $charset_collate;";
+
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql_logs );
 		dbDelta( $sql_blocked_ips );
 		dbDelta( $sql_login_attempts );
 		dbDelta( $sql_scan_results );
+		dbDelta( $sql_2fa_tokens );
+		dbDelta( $sql_sessions );
 
 		// Set default options
 		$default_settings = array(
@@ -134,6 +167,16 @@ class WPH_Activator {
 			'header_anomaly_threshold'   => 20,
 			'cookie_security'            => true,
 			'cookie_samesite'            => 'Lax',
+			// Advanced Authentication settings
+			'2fa_enabled'                => false,
+			'2fa_required_roles'         => array( 'administrator' ),
+			'2fa_grace_period'           => 7, // days
+			'passwordless_login'         => false,
+			'session_ip_binding'         => true,
+			'session_timeout'            => 43200, // 12 hours
+			'max_concurrent_sessions'    => 3,
+			'password_expiry_days'       => 90,
+			'password_history_count'     => 5,
 		);
 
 		add_option( 'wph_settings', $default_settings );
