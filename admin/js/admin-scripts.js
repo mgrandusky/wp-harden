@@ -776,6 +776,7 @@
 						
 						// Build details HTML
 						var html = '<tr class="wph-log-details-row" data-log-id="' + logId + '">';
+						// Colspan must match the number of columns in the parent table (currently 9)
 						html += '<td colspan="9" style="padding: 0; background: #f9f9f9; border-left: 4px solid #2271b1;">';
 						html += '<div class="wph-log-details-content" style="padding: 20px; display: none;">';
 						
@@ -786,10 +787,10 @@
 						html += '<div class="wph-details-section">';
 						html += '<h4 style="margin: 0 0 10px 0; color: #1d2327;">Basic Information</h4>';
 						html += '<table class="wph-details-table" style="width: 100%; border-collapse: collapse;">';
-						html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600; width: 120px;">Log ID:</td><td style="padding: 5px 0;">' + details.id + '</td></tr>';
-						html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">Time:</td><td style="padding: 5px 0;">' + details.created_at + '</td></tr>';
-						html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">Type:</td><td style="padding: 5px 0;"><span class="wph-badge wph-badge-' + details.log_type + '">' + ucfirst(details.log_type) + '</span></td></tr>';
-						html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">Severity:</td><td style="padding: 5px 0;"><span class="wph-severity wph-severity-' + details.severity + '">' + ucfirst(details.severity) + '</span></td></tr>';
+						html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600; width: 120px;">Log ID:</td><td style="padding: 5px 0;">' + escapeHtml(details.id) + '</td></tr>';
+						html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">Time:</td><td style="padding: 5px 0;">' + escapeHtml(details.created_at) + '</td></tr>';
+						html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">Type:</td><td style="padding: 5px 0;"><span class="wph-badge wph-badge-' + escapeHtml(details.log_type) + '">' + escapeHtml(ucfirst(details.log_type)) + '</span></td></tr>';
+						html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">Severity:</td><td style="padding: 5px 0;"><span class="wph-severity wph-severity-' + escapeHtml(details.severity) + '">' + escapeHtml(ucfirst(details.severity)) + '</span></td></tr>';
 						html += '</table>';
 						html += '</div>';
 						
@@ -797,15 +798,15 @@
 						html += '<div class="wph-details-section">';
 						html += '<h4 style="margin: 0 0 10px 0; color: #1d2327;">Network & User</h4>';
 						html += '<table class="wph-details-table" style="width: 100%; border-collapse: collapse;">';
-						html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600; width: 120px;">IP Address:</td><td style="padding: 5px 0;"><code style="background: #f0f0f1; padding: 2px 6px; border-radius: 3px;">' + details.ip_address + '</code></td></tr>';
+						html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600; width: 120px;">IP Address:</td><td style="padding: 5px 0;"><code style="background: #f0f0f1; padding: 2px 6px; border-radius: 3px;">' + escapeHtml(details.ip_address) + '</code></td></tr>';
 						
 						if (details.user_id) {
-							html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">User ID:</td><td style="padding: 5px 0;">' + details.user_id + '</td></tr>';
+							html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">User ID:</td><td style="padding: 5px 0;">' + escapeHtml(details.user_id) + '</td></tr>';
 							if (details.user_login) {
-								html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">Username:</td><td style="padding: 5px 0;">' + details.user_login + '</td></tr>';
+								html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">Username:</td><td style="padding: 5px 0;">' + escapeHtml(details.user_login) + '</td></tr>';
 							}
 							if (details.user_email) {
-								html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">Email:</td><td style="padding: 5px 0;">' + details.user_email + '</td></tr>';
+								html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">Email:</td><td style="padding: 5px 0;">' + escapeHtml(details.user_email) + '</td></tr>';
 							}
 						} else {
 							html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">User:</td><td style="padding: 5px 0;">—</td></tr>';
@@ -889,6 +890,11 @@
 
 		// Helper function to escape HTML
 		function escapeHtml(text) {
+			// Handle null, undefined, or non-string values
+			if (text === null || text === undefined) {
+				return '';
+			}
+			text = String(text);
 			var map = {
 				'&': '&amp;',
 				'<': '&lt;',
