@@ -174,6 +174,74 @@ class WPH_Activator {
 			KEY created_at (created_at)
 		) $charset_collate;";
 
+		// Table for audit trail
+		$table_audit_trail = $wpdb->prefix . 'wph_audit_trail';
+		$sql_audit_trail   = "CREATE TABLE IF NOT EXISTS $table_audit_trail (
+			id bigint(20) NOT NULL AUTO_INCREMENT,
+			user_id bigint(20) NOT NULL,
+			action varchar(100) NOT NULL,
+			object_type varchar(50) NOT NULL,
+			object_id bigint(20) DEFAULT NULL,
+			old_value longtext DEFAULT NULL,
+			new_value longtext DEFAULT NULL,
+			ip_address varchar(45) NOT NULL,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY user_id (user_id),
+			KEY action (action),
+			KEY created_at (created_at)
+		) $charset_collate;";
+
+		// Table for vulnerabilities
+		$table_vulnerabilities = $wpdb->prefix . 'wph_vulnerabilities';
+		$sql_vulnerabilities   = "CREATE TABLE IF NOT EXISTS $table_vulnerabilities (
+			id bigint(20) NOT NULL AUTO_INCREMENT,
+			component_type varchar(20) NOT NULL,
+			component_slug varchar(255) NOT NULL,
+			component_version varchar(50) NOT NULL,
+			vulnerability_title varchar(255) NOT NULL,
+			cve_id varchar(50) DEFAULT NULL,
+			severity varchar(20) NOT NULL,
+			fixed_in varchar(50) DEFAULT NULL,
+			discovered_at datetime NOT NULL,
+			is_fixed tinyint(1) DEFAULT 0,
+			PRIMARY KEY  (id),
+			KEY component_slug (component_slug(191)),
+			KEY severity (severity),
+			KEY is_fixed (is_fixed)
+		) $charset_collate;";
+
+		// Table for incidents
+		$table_incidents = $wpdb->prefix . 'wph_incidents';
+		$sql_incidents   = "CREATE TABLE IF NOT EXISTS $table_incidents (
+			id bigint(20) NOT NULL AUTO_INCREMENT,
+			incident_type varchar(50) NOT NULL,
+			severity varchar(20) NOT NULL,
+			description text NOT NULL,
+			affected_files longtext DEFAULT NULL,
+			response_actions longtext DEFAULT NULL,
+			status varchar(20) NOT NULL,
+			detected_at datetime NOT NULL,
+			resolved_at datetime DEFAULT NULL,
+			PRIMARY KEY  (id),
+			KEY incident_type (incident_type),
+			KEY severity (severity),
+			KEY status (status)
+		) $charset_collate;";
+
+		// Table for compliance reports
+		$table_compliance = $wpdb->prefix . 'wph_compliance_reports';
+		$sql_compliance   = "CREATE TABLE IF NOT EXISTS $table_compliance (
+			id bigint(20) NOT NULL AUTO_INCREMENT,
+			report_type varchar(50) NOT NULL,
+			report_period varchar(20) NOT NULL,
+			report_data longtext NOT NULL,
+			generated_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY report_type (report_type),
+			KEY generated_at (generated_at)
+		) $charset_collate;";
+
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql_logs );
 		dbDelta( $sql_blocked_ips );
@@ -184,6 +252,10 @@ class WPH_Activator {
 		dbDelta( $sql_threat_intel );
 		dbDelta( $sql_file_changes );
 		dbDelta( $sql_backups );
+		dbDelta( $sql_audit_trail );
+		dbDelta( $sql_vulnerabilities );
+		dbDelta( $sql_incidents );
+		dbDelta( $sql_compliance );
 
 		// Set default options
 		$default_settings = array(
@@ -273,6 +345,34 @@ class WPH_Activator {
 			'db_slow_query_threshold'    => 2.0, // seconds
 			'db_cleanup_revisions'       => true,
 			'db_max_revisions'           => 5,
+			// Advanced Monitoring settings
+			'monitoring_enabled'         => true,
+			'audit_trail_enabled'        => true,
+			'track_user_activity'        => true,
+			'track_admin_actions'        => true,
+			'security_reports_enabled'   => true,
+			'security_report_schedule'   => 'weekly',
+			'security_report_recipients' => array( get_option( 'admin_email' ) ),
+			// Vulnerability Management settings
+			'vuln_scan_enabled'          => true,
+			'vuln_scan_schedule'         => 'daily',
+			'wpscan_api_key'             => '',
+			'auto_update_core'           => true,
+			'auto_update_plugins'        => false,
+			'auto_update_themes'         => false,
+			'abandoned_plugin_threshold' => 730, // days (2 years)
+			// Incident Response settings
+			'incident_response_enabled'  => true,
+			'auto_quarantine_malware'    => true,
+			'lockdown_mode_enabled'      => false,
+			'lockdown_whitelist_ips'     => array(),
+			'lockdown_whitelist_users'   => array(),
+			// Compliance settings
+			'compliance_enabled'         => true,
+			'gdpr_tools_enabled'         => true,
+			'audit_log_retention'        => 365, // days
+			'compliance_reports_enabled' => true,
+			'compliance_report_schedule' => 'monthly',
 		);
 
 		add_option( 'wph_settings', $default_settings );
