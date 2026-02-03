@@ -104,7 +104,7 @@ if ( $latest_scan && ! empty( $latest_scan->scan_data ) ) {
 		
 		<div class="wph-scan-meta">
 			<p><strong><?php esc_html_e( 'Scan Date:', 'wp-harden' ); ?></strong> <?php echo esc_html( $latest_scan->completed_at ); ?></p>
-			<p><strong><?php esc_html_e( 'Scan Type:', 'wp-harden' ); ?></strong> <?php echo esc_html( ucfirst( $latest_scan->scan_type ) ); ?></p>
+			<p><strong><?php esc_html_e( 'Scan Type:', 'wp-harden' ); ?></strong> <?php echo esc_html( ucfirst( $latest_scan->scan_type ?? 'full' ) ); ?></p>
 			<p><strong><?php esc_html_e( 'Total Issues:', 'wp-harden' ); ?></strong> 
 				<span class="wph-issue-badge <?php echo $latest_scan->issues_found > 0 ? 'has-issues' : 'no-issues'; ?>">
 					<?php echo absint( $latest_scan->issues_found ); ?>

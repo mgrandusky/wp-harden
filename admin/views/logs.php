@@ -165,7 +165,14 @@ $total_pages = ceil( $total_logs / $per_page );
 							<td><?php echo absint( $log->id ); ?></td>
 							<td>
 								<abbr title="<?php echo esc_attr( $log->created_at ); ?>">
-									<?php echo esc_html( human_time_diff( strtotime( $log->created_at ), current_time( 'timestamp' ) ) ); ?> ago
+									<?php
+									$timestamp = strtotime( $log->created_at );
+									if ( false !== $timestamp ) {
+										echo esc_html( human_time_diff( $timestamp, current_time( 'timestamp' ) ) . ' ago' );
+									} else {
+										echo esc_html( $log->created_at );
+									}
+									?>
 								</abbr>
 							</td>
 							<td>

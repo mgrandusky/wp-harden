@@ -602,7 +602,12 @@
 						message += 'Message: ' + details.message + '\n';
 						message += 'IP: ' + details.ip_address + '\n';
 						if (details.context) {
-							message += '\nContext:\n' + JSON.stringify(JSON.parse(details.context), null, 2);
+							try {
+								var contextData = typeof details.context === 'string' ? JSON.parse(details.context) : details.context;
+								message += '\nContext:\n' + JSON.stringify(contextData, null, 2);
+							} catch (e) {
+								message += '\nContext: ' + details.context;
+							}
 						}
 						alert(message);
 					}

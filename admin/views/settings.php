@@ -56,7 +56,6 @@ if ( isset( $_POST['wph_settings_nonce'] ) && wp_verify_nonce( sanitize_text_fie
 	$text_fields = array(
 		'firewall_sensitivity',
 		'scan_schedule',
-		'notification_email',
 		'security_level',
 		'captcha_type',
 		'recaptcha_site_key',
@@ -73,7 +72,7 @@ if ( isset( $_POST['wph_settings_nonce'] ) && wp_verify_nonce( sanitize_text_fie
 	foreach ( $text_fields as $field ) {
 		if ( isset( $_POST[ $field ] ) ) {
 			if ( strpos( $field, '_key' ) !== false || strpos( $field, '_secret' ) !== false ) {
-				// For API keys and secrets, encrypt before storing
+				// For API keys and secrets, sanitize (note: stored as plain text, encryption can be added in future)
 				$new_settings[ $field ] = sanitize_text_field( wp_unslash( $_POST[ $field ] ) );
 			} elseif ( in_array( $field, array( 'custom_firewall_rules', 'excluded_urls' ), true ) ) {
 				$new_settings[ $field ] = sanitize_textarea_field( wp_unslash( $_POST[ $field ] ) );
@@ -83,7 +82,7 @@ if ( isset( $_POST['wph_settings_nonce'] ) && wp_verify_nonce( sanitize_text_fie
 		}
 	}
 
-	// Email field
+	// Email field - separate from text fields for proper email sanitization
 	if ( isset( $_POST['notification_email'] ) ) {
 		$new_settings['notification_email'] = sanitize_email( wp_unslash( $_POST['notification_email'] ) );
 	}
