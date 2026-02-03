@@ -227,7 +227,12 @@ class WPH_Database_Security {
 			$old_table = $table[0];
 			$new_table = str_replace( $old_prefix, $new_prefix, $old_table );
 
-			$result = $wpdb->query( $wpdb->prepare( 'RENAME TABLE %i TO %i', $old_table, $new_table ) );
+			// Validate table names to prevent SQL injection
+			if ( ! preg_match( '/^[a-zA-Z0-9_]+$/', $old_table ) || ! preg_match( '/^[a-zA-Z0-9_]+$/', $new_table ) ) {
+				continue;
+			}
+
+			$result = $wpdb->query( "RENAME TABLE `{$old_table}` TO `{$new_table}`" );
 
 			if ( false === $result ) {
 				$this->logger->log( 'database', 'high', "Failed to rename table {$old_table}" );
@@ -364,7 +369,13 @@ class WPH_Database_Security {
 		foreach ( $tables as $table ) {
 			$new_table = $table[0];
 			$old_table = str_replace( $new_prefix, $old_prefix, $new_table );
-			$wpdb->query( $wpdb->prepare( 'RENAME TABLE %i TO %i', $new_table, $old_table ) );
+			
+			// Validate table names to prevent SQL injection
+			if ( ! preg_match( '/^[a-zA-Z0-9_]+$/', $old_table ) || ! preg_match( '/^[a-zA-Z0-9_]+$/', $new_table ) ) {
+				continue;
+			}
+			
+			$wpdb->query( "RENAME TABLE `{$new_table}` TO `{$old_table}`" );
 		}
 
 		return true;
