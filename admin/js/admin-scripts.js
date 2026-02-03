@@ -735,9 +735,32 @@
 			}
 		});
 
-		// View log details
-		$(document).on('click', '.wph-view-log-details', function() {
-			var logId = $(this).data('log-id');
+		// View log details - Accordion style
+		$(document).on('click', '.wph-view-log-details', function(e) {
+			e.preventDefault();
+			
+			var $button = $(this);
+			var logId = $button.data('log-id');
+			var $row = $button.closest('tr');
+			var $detailsRow = $row.next('.wph-log-details-row');
+			
+			// If details are already showing, collapse them
+			if ($detailsRow.length && $detailsRow.data('log-id') == logId) {
+				$detailsRow.slideUp(300, function() {
+					$(this).remove();
+				});
+				$button.text('Details').removeClass('wph-details-open');
+				return;
+			}
+			
+			// Close any other open details rows
+			$('.wph-log-details-row').slideUp(300, function() {
+				$(this).remove();
+			});
+			$('.wph-view-log-details').text('Details').removeClass('wph-details-open');
+			
+			// Show loading state
+			$button.addClass('wph-loading').prop('disabled', true);
 			
 			$.ajax({
 				url: wphAjax.ajaxurl,
@@ -749,28 +772,139 @@
 				},
 				success: function(response) {
 					if (response.success) {
-						// Display log details in a modal or alert
 						var details = response.data.log;
-						var message = 'Log Details:\n\n';
-						message += 'ID: ' + details.id + '\n';
-						message += 'Time: ' + details.created_at + '\n';
-						message += 'Type: ' + details.log_type + '\n';
-						message += 'Severity: ' + details.severity + '\n';
-						message += 'Message: ' + details.message + '\n';
-						message += 'IP: ' + details.ip_address + '\n';
-						if (details.context) {
-							try {
-								var contextData = typeof details.context === 'string' ? JSON.parse(details.context) : details.context;
-								message += '\nContext:\n' + JSON.stringify(contextData, null, 2);
-							} catch (e) {
-								message += '\nContext: ' + details.context;
+						
+						// Build details HTML
+						// Calculate colspan dynamically based on table header columns
+						var colspan = $row.closest('table').find('thead th').length;
+						var html = '<tr class="wph-log-details-row" data-log-id="' + logId + '">';
+						html += '<td colspan="' + colspan + '" style="padding: 0; background: #f9f9f9; border-left: 4px solid #2271b1;">';
+						html += '<div class="wph-log-details-content" style="padding: 20px; display: none;">';
+						
+						// Main details grid
+						html += '<div class="wph-details-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">';
+						
+						// Left column
+						html += '<div class="wph-details-section">';
+						html += '<h4 style="margin: 0 0 10px 0; color: #1d2327;">Basic Information</h4>';
+						html += '<table class="wph-details-table" style="width: 100%; border-collapse: collapse;">';
+						html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600; width: 120px;">Log ID:</td><td style="padding: 5px 0;">' + escapeHtml(details.id) + '</td></tr>';
+						html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">Time:</td><td style="padding: 5px 0;">' + escapeHtml(details.created_at) + '</td></tr>';
+						html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">Type:</td><td style="padding: 5px 0;"><span class="wph-badge wph-badge-' + escapeHtml(details.log_type) + '">' + escapeHtml(ucfirst(details.log_type)) + '</span></td></tr>';
+						html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">Severity:</td><td style="padding: 5px 0;"><span class="wph-severity wph-severity-' + escapeHtml(details.severity) + '">' + escapeHtml(ucfirst(details.severity)) + '</span></td></tr>';
+						html += '</table>';
+						html += '</div>';
+						
+						// Right column
+						html += '<div class="wph-details-section">';
+						html += '<h4 style="margin: 0 0 10px 0; color: #1d2327;">Network & User</h4>';
+						html += '<table class="wph-details-table" style="width: 100%; border-collapse: collapse;">';
+						html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600; width: 120px;">IP Address:</td><td style="padding: 5px 0;"><code style="background: #f0f0f1; padding: 2px 6px; border-radius: 3px;">' + escapeHtml(details.ip_address) + '</code></td></tr>';
+						
+						if (details.user_id) {
+							html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">User ID:</td><td style="padding: 5px 0;">' + escapeHtml(details.user_id) + '</td></tr>';
+							if (details.user_login) {
+								html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">Username:</td><td style="padding: 5px 0;">' + escapeHtml(details.user_login) + '</td></tr>';
 							}
+							if (details.user_email) {
+								html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">Email:</td><td style="padding: 5px 0;">' + escapeHtml(details.user_email) + '</td></tr>';
+							}
+						} else {
+							html += '<tr><td style="padding: 5px 10px 5px 0; font-weight: 600;">User:</td><td style="padding: 5px 0;">—</td></tr>';
 						}
-						alert(message);
+						
+						html += '</table>';
+						html += '</div>';
+						
+						html += '</div>'; // End grid
+						
+						// Message section
+						html += '<div class="wph-details-section" style="margin-bottom: 20px;">';
+						html += '<h4 style="margin: 0 0 10px 0; color: #1d2327;">Message</h4>';
+						html += '<div style="background: white; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">' + escapeHtml(details.message) + '</div>';
+						html += '</div>';
+						
+						// Context section (if exists)
+						if (details.context) {
+							html += '<div class="wph-details-section">';
+							html += '<h4 style="margin: 0 0 10px 0; color: #1d2327;">Context Data</h4>';
+							
+							var contextData = details.context;
+							if (typeof contextData === 'string') {
+								try {
+									contextData = JSON.parse(contextData);
+								} catch (e) {
+									// Keep as string if not valid JSON
+								}
+							}
+							
+							if (typeof contextData === 'object' && contextData !== null) {
+								html += '<pre style="background: #f0f0f1; padding: 15px; border-radius: 4px; overflow-x: auto; max-height: 400px; font-size: 12px; line-height: 1.5;">' + escapeHtml(JSON.stringify(contextData, null, 2)) + '</pre>';
+							} else {
+								html += '<div style="background: white; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">' + escapeHtml(String(contextData)) + '</div>';
+							}
+							
+							html += '</div>';
+						}
+						
+						// Close button
+						html += '<div style="text-align: right; padding-top: 10px; border-top: 1px solid #ddd;">';
+						html += '<button class="button wph-close-details" data-log-id="' + logId + '">Close Details</button>';
+						html += '</div>';
+						
+						html += '</div>'; // End content
+						html += '</td></tr>';
+						
+						// Insert the details row after the current row
+						$row.after(html);
+						
+						// Slide down animation
+						$('.wph-log-details-row[data-log-id="' + logId + '"] .wph-log-details-content').slideDown(300);
+						
+						// Update button text
+						$button.text('Hide Details').addClass('wph-details-open');
+					} else {
+						alert('❌ Failed to load log details.');
 					}
+				},
+				error: function() {
+					alert('❌ Failed to load log details. Please try again.');
+				},
+				complete: function() {
+					$button.removeClass('wph-loading').prop('disabled', false);
 				}
 			});
 		});
+
+		// Close details button
+		$(document).on('click', '.wph-close-details', function(e) {
+			e.preventDefault();
+			var logId = $(this).data('log-id');
+			var $detailsRow = $('.wph-log-details-row[data-log-id="' + logId + '"]');
+			
+			$detailsRow.find('.wph-log-details-content').slideUp(300, function() {
+				$detailsRow.remove();
+			});
+			
+			$('.wph-view-log-details[data-log-id="' + logId + '"]').text('Details').removeClass('wph-details-open');
+		});
+
+		// Helper function to escape HTML
+		function escapeHtml(text) {
+			// Handle null, undefined, or non-string values
+			if (text === null || text === undefined) {
+				return '';
+			}
+			text = String(text);
+			var map = {
+				'&': '&amp;',
+				'<': '&lt;',
+				'>': '&gt;',
+				'"': '&quot;',
+				"'": '&#039;'
+			};
+			return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+		}
 
 		// Helper functions
 		function ucfirst(str) {

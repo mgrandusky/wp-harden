@@ -662,3 +662,93 @@
 @keyframes wph-spin {
 	to { transform: rotate(360deg); }
 }
+
+/* Activity Log Details Accordion */
+.wph-log-details-row {
+	background: #f9f9f9 !important;
+}
+
+.wph-log-details-content {
+	animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.wph-view-log-details.wph-details-open {
+	background: #2271b1;
+	color: white;
+	border-color: #135e96;
+}
+
+.wph-view-log-details.wph-details-open:hover {
+	background: #135e96;
+	border-color: #0a4b78;
+}
+
+.wph-details-grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 15px;
+}
+
+@media (max-width: 782px) {
+	.wph-details-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+.wph-details-section h4 {
+	margin: 0 0 10px 0;
+	color: #1d2327;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.wph-details-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.wph-details-table td {
+	padding: 5px 10px 5px 0;
+	font-size: 13px;
+}
+
+.wph-details-table td:first-child {
+	font-weight: 600;
+	width: 120px;
+	color: #50575e;
+}
+
+.wph-close-details {
+	margin-top: 10px;
+}
+
+/* Loading state for details button */
+.wph-view-log-details.wph-loading {
+	position: relative;
+	color: transparent;
+	pointer-events: none;
+}
+
+.wph-view-log-details.wph-loading::after {
+	content: "";
+	position: absolute;
+	width: 14px;
+	height: 14px;
+	top: 50%;
+	left: 50%;
+	margin-left: -7px;
+	margin-top: -7px;
+	border: 2px solid #f3f3f3;
+	border-top: 2px solid #2271b1;
+	border-radius: 50%;
+	animation: wph-spin 1s linear infinite;
+}
