@@ -26,17 +26,30 @@
 		});
 
 		// Run Security Scan
-		$('#wph-run-scan').on('click', function(e) {
+		$('#wph-run-scan, #wph-run-full-scan, #wph-run-quick-scan').on('click', function(e) {
 			e.preventDefault();
 			
 			var $button = $(this);
+			var scanType = $(this).attr('id') === 'wph-run-quick-scan' ? 'quick' : 'full';
 			var $progress = $('#wph-scan-progress');
 			var $results = $('#wph-scan-results');
+			var $progressFill = $('.wph-progress-fill');
+			var $scanStatus = $('.wph-scan-status');
 			
 			// Disable button and show progress
 			$button.prop('disabled', true).text('Scanning...');
 			$progress.show();
 			$results.hide().html('');
+			
+			// Simulate progress
+			var progress = 0;
+			var progressInterval = setInterval(function() {
+				progress += 5;
+				if (progress <= 95) {
+					$progressFill.css('width', progress + '%');
+					$scanStatus.text('Scanning... ' + progress + '%');
+				}
+			}, 500);
 			
 			// Make AJAX request
 			$.ajax({
@@ -44,23 +57,35 @@
 				type: 'POST',
 				data: {
 					action: 'wph_run_scan',
-					nonce: wphAjax.nonce
+					nonce: wphAjax.nonce,
+					scan_type: scanType
 				},
 				success: function(response) {
+					clearInterval(progressInterval);
+					$progressFill.css('width', '100%');
+					$scanStatus.text('Scan complete!');
+					
 					if (response.success) {
 						displayScanResults(response.data.results);
 						$results.show();
-						alert('Security scan completed successfully!');
+						setTimeout(function() {
+							alert('Security scan completed successfully!');
+							location.reload();
+						}, 1000);
 					} else {
 						alert('Error: ' + (response.data.message || 'Unknown error'));
 					}
 				},
 				error: function() {
+					clearInterval(progressInterval);
 					alert('Failed to run security scan. Please try again.');
 				},
 				complete: function() {
-					$button.prop('disabled', false).text('🔍 Run Security Scan');
-					$progress.hide();
+					$button.prop('disabled', false).text('🔍 ' + (scanType === 'quick' ? 'Quick Scan' : 'Start Full Scan'));
+					setTimeout(function() {
+						$progress.hide();
+						$progressFill.css('width', '0%');
+					}, 2000);
 				}
 			});
 		});
@@ -313,6 +338,133 @@
 			setTimeout(function() {
 				$button.removeClass('wph-loading').prop('disabled', false);
 			}, 2000);
+		});
+
+		// Select All Issues
+		$('.wph-select-all-issues').on('change', function() {
+			var isChecked = $(this).prop('checked');
+			$(this).closest('table').find('.wph-issue-checkbox').prop('checked', isChecked);
+		});
+
+		// Update scan schedule
+		$('#scan-schedule-select').on('change', function() {
+			var schedule = $(this).val();
+			
+			$.ajax({
+				url: wphAjax.ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'wph_update_scan_schedule',
+					nonce: wphAjax.nonce,
+					schedule: schedule
+				},
+				success: function(response) {
+					if (response.success) {
+						alert('✅ Scan schedule updated successfully!');
+					}
+				}
+			});
+		});
+
+		// Fix issue
+		$(document).on('click', '.wph-fix-issue', function() {
+			var issueId = $(this).data('issue-id');
+			
+			if (!confirm('Attempt to automatically fix this issue?')) {
+				return;
+			}
+			
+			var $button = $(this);
+			$button.addClass('wph-loading').prop('disabled', true);
+			
+			$.ajax({
+				url: wphAjax.ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'wph_fix_issue',
+					nonce: wphAjax.nonce,
+					issue_id: issueId
+				},
+				success: function(response) {
+					if (response.success) {
+						alert('✅ Issue fixed successfully!');
+						location.reload();
+					} else {
+						alert('❌ Failed to fix issue: ' + (response.data.message || 'Unknown error'));
+					}
+				},
+				error: function() {
+					alert('❌ Failed to fix issue. Please try again.');
+				},
+				complete: function() {
+					$button.removeClass('wph-loading').prop('disabled', false);
+				}
+			});
+		});
+
+		// Ignore issue
+		$(document).on('click', '.wph-ignore-issue', function() {
+			var issueId = $(this).data('issue-id');
+			var $row = $(this).closest('tr');
+			
+			if (!confirm('Ignore this issue? It will not appear in future scans.')) {
+				return;
+			}
+			
+			$.ajax({
+				url: wphAjax.ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'wph_ignore_issue',
+					nonce: wphAjax.nonce,
+					issue_id: issueId
+				},
+				success: function(response) {
+					if (response.success) {
+						$row.fadeOut(300, function() {
+							$(this).remove();
+						});
+					} else {
+						alert('❌ Failed to ignore issue.');
+					}
+				}
+			});
+		});
+
+		// Quarantine file
+		$(document).on('click', '.wph-quarantine-file', function() {
+			var file = $(this).data('file');
+			
+			if (!confirm('Quarantine this file? It will be moved to a safe location.')) {
+				return;
+			}
+			
+			var $button = $(this);
+			$button.addClass('wph-loading').prop('disabled', true);
+			
+			$.ajax({
+				url: wphAjax.ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'wph_quarantine_file',
+					nonce: wphAjax.nonce,
+					file: file
+				},
+				success: function(response) {
+					if (response.success) {
+						alert('✅ File quarantined successfully!');
+						location.reload();
+					} else {
+						alert('❌ Failed to quarantine file: ' + (response.data.message || 'Unknown error'));
+					}
+				},
+				error: function() {
+					alert('❌ Failed to quarantine file. Please try again.');
+				},
+				complete: function() {
+					$button.removeClass('wph-loading').prop('disabled', false);
+				}
+			});
 		});
 
 		// Helper functions
