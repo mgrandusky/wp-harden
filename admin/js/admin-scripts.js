@@ -570,7 +570,8 @@
 		// Helper function to show admin notices
 		function showNotice(type, message) {
 			var noticeClass = type === 'success' ? 'notice-success' : 'notice-error';
-			var $notice = $('<div class="notice ' + noticeClass + ' is-dismissible"><p>' + message + '</p></div>');
+			var $notice = $('<div class="notice ' + noticeClass + ' is-dismissible"><p></p></div>');
+			$notice.find('p').text(message);
 			$('.wrap h1').after($notice);
 			
 			// Auto-dismiss after 5 seconds

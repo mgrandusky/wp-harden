@@ -556,7 +556,7 @@ class WPH_Scanner {
 	public function ignore_issue( $issue_type, $issue_data, $reason = '' ) {
 		global $wpdb;
 		
-		$table = $wpdb->prefix . 'wph_ignored_issues';
+		$table_name = $wpdb->prefix . 'wph_ignored_issues';
 		
 		// Create unique key for this issue
 		$issue_key = md5( $issue_type . wp_json_encode( $issue_data ) );
@@ -564,7 +564,7 @@ class WPH_Scanner {
 		// Check if already ignored
 		$existing = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM $table WHERE issue_key = %s",
+				"SELECT COUNT(*) FROM `{$table_name}` WHERE issue_key = %s",
 				$issue_key
 			)
 		);
@@ -574,7 +574,7 @@ class WPH_Scanner {
 		}
 		
 		$result = $wpdb->insert(
-			$table,
+			$table_name,
 			array(
 				'issue_type' => sanitize_text_field( $issue_type ),
 				'issue_key'  => $issue_key,
@@ -616,12 +616,12 @@ class WPH_Scanner {
 	public function is_issue_ignored( $issue_type, $issue_data ) {
 		global $wpdb;
 		
-		$table = $wpdb->prefix . 'wph_ignored_issues';
+		$table_name = $wpdb->prefix . 'wph_ignored_issues';
 		$issue_key = md5( $issue_type . wp_json_encode( $issue_data ) );
 		
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM $table WHERE issue_key = %s",
+				"SELECT COUNT(*) FROM `{$table_name}` WHERE issue_key = %s",
 				$issue_key
 			)
 		);
