@@ -123,6 +123,17 @@ class WPH_Activator {
 			'rate_limit_period'          => 60, // per minute
 			'strong_password_enforcement' => true,
 			'prevent_username_enumeration' => true,
+			// Advanced WAF settings
+			'advanced_rate_limiting'     => true,
+			'ddos_protection'            => true,
+			'ddos_spike_threshold'       => 3,
+			'http_method_filtering'      => true,
+			'file_upload_security'       => true,
+			'max_upload_size'            => 10485760, // 10MB
+			'header_anomaly_detection'   => true,
+			'header_anomaly_threshold'   => 20,
+			'cookie_security'            => true,
+			'cookie_samesite'            => 'Lax',
 		);
 
 		add_option( 'wph_settings', $default_settings );
