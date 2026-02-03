@@ -654,15 +654,15 @@ class WPH_Scanner {
 			return $issues;
 		}
 		
-		$filtered = array();
+		$filtered_issues = array();
 		
 		foreach ( $issues as $issue ) {
 			// Check if this specific issue has been ignored
 			if ( ! $this->is_issue_ignored( $issue_type, $issue ) ) {
-				$filtered[] = $issue;
+				$filtered_issues[] = $issue;
 			}
 		}
 		
-		return $filtered;
+		return $filtered_issues;
 	}
 }
