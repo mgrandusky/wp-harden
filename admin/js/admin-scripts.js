@@ -775,9 +775,10 @@
 						var details = response.data.log;
 						
 						// Build details HTML
+						// Calculate colspan dynamically based on table header columns
+						var colspan = $row.closest('table').find('thead th').length;
 						var html = '<tr class="wph-log-details-row" data-log-id="' + logId + '">';
-						// Colspan must match the number of columns in the parent table (currently 9)
-						html += '<td colspan="9" style="padding: 0; background: #f9f9f9; border-left: 4px solid #2271b1;">';
+						html += '<td colspan="' + colspan + '" style="padding: 0; background: #f9f9f9; border-left: 4px solid #2271b1;">';
 						html += '<div class="wph-log-details-content" style="padding: 20px; display: none;">';
 						
 						// Main details grid
