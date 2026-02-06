@@ -827,7 +827,7 @@ class WPH_Hardening {
 	 */
 	private function log( $message, $level = 'info' ) {
 		if ( $this->logger && method_exists( $this->logger, 'log' ) ) {
-			$this->logger->log( $message, $level );
+			$this->logger->log( 'hardening', $level, $message );
 		}
 	}
 
