@@ -70,13 +70,9 @@
 						$results.show();
 						setTimeout(function() {
 							// Add success parameter for admin notice
-							var newUrl = window.location.href;
-							if (newUrl.indexOf('?') > -1) {
-								newUrl += '&scan_success=1';
-							} else {
-								newUrl += '?scan_success=1';
-							}
-							window.location.href = newUrl;
+							var currentUrl = new URL(window.location.href);
+							currentUrl.searchParams.set('scan_success', '1');
+							window.location.href = currentUrl.toString();
 						}, 1500);
 					} else {
 						alert('Error: ' + (response.data.message || 'Unknown error'));

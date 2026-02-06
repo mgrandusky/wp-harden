@@ -12,7 +12,7 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 // Show success message if redirected after scan
-if ( isset( $_GET['scan_success'] ) ) {
+if ( isset( $_GET['scan_success'] ) && $_GET['scan_success'] === '1' ) {
 	echo '<div class="notice notice-success is-dismissible"><p>';
 	echo '<strong>' . esc_html__( '✅ Security scan completed successfully!', 'wp-harden' ) . '</strong>';
 	echo '</p></div>';
