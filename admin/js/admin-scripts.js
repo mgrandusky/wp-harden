@@ -69,10 +69,8 @@
 						displayScanResults(response.data.results);
 						$results.show();
 						setTimeout(function() {
-							// Add success parameter for admin notice
-							var currentUrl = new URL(window.location.href);
-							currentUrl.searchParams.set('scan_success', '1');
-							window.location.href = currentUrl.toString();
+							// Reload page to show success notice from transient
+							location.reload();
 						}, 1500);
 					} else {
 						alert('Error: ' + (response.data.message || 'Unknown error'));

@@ -12,7 +12,9 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 // Show success message if redirected after scan
-if ( isset( $_GET['scan_success'] ) && sanitize_text_field( wp_unslash( $_GET['scan_success'] ) ) === '1' ) {
+$scan_success_transient = get_transient( 'wph_scan_success_' . get_current_user_id() );
+if ( $scan_success_transient ) {
+	delete_transient( 'wph_scan_success_' . get_current_user_id() );
 	echo '<div class="notice notice-success is-dismissible"><p>';
 	echo '<strong>' . esc_html__( 'Security scan completed successfully!', 'wp-harden' ) . '</strong>';
 	echo '</p></div>';
