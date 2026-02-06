@@ -69,9 +69,15 @@
 						displayScanResults(response.data.results);
 						$results.show();
 						setTimeout(function() {
-							alert('Security scan completed successfully!');
-							location.reload();
-						}, 1000);
+							// Add success parameter for admin notice
+							var newUrl = window.location.href;
+							if (newUrl.indexOf('?') > -1) {
+								newUrl += '&scan_success=1';
+							} else {
+								newUrl += '?scan_success=1';
+							}
+							window.location.href = newUrl;
+						}, 1500);
 					} else {
 						alert('Error: ' + (response.data.message || 'Unknown error'));
 					}
