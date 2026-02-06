@@ -246,6 +246,9 @@ class WPH_Admin {
 		$scanner = WPH_Scanner::get_instance();
 		$results = $scanner->run_scan();
 
+		// Set transient to show success notice after page reload
+		set_transient( 'wph_scan_success_' . get_current_user_id(), true, 60 );
+
 		wp_send_json_success( array( 'results' => $results ) );
 	}
 

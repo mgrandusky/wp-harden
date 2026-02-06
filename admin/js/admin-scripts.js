@@ -69,9 +69,9 @@
 						displayScanResults(response.data.results);
 						$results.show();
 						setTimeout(function() {
-							alert('Security scan completed successfully!');
+							// Reload page to show success notice from transient
 							location.reload();
-						}, 1000);
+						}, 1500);
 					} else {
 						alert('Error: ' + (response.data.message || 'Unknown error'));
 					}
