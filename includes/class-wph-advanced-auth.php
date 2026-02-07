@@ -180,7 +180,7 @@ class WPH_Advanced_Auth {
 
 		// Log event
 		if ( class_exists( 'WPH_Logger' ) ) {
-			WPH_Logger::log( 'info', "2FA setup initiated for user {$user_id}" );
+			WPH_Logger::get_instance()->log( 'auth', 'info', "2FA setup initiated for user {$user_id}" );
 		}
 
 		do_action( 'wph_2fa_enabled', $user_id );
@@ -235,7 +235,7 @@ class WPH_Advanced_Auth {
 
 		// Log event
 		if ( class_exists( 'WPH_Logger' ) ) {
-			WPH_Logger::log( 'info', "2FA enabled for user {$user_id}" );
+			WPH_Logger::get_instance()->log( 'auth', 'info', "2FA enabled for user {$user_id}" );
 		}
 
 		do_action( 'wph_2fa_verified', $user_id );
@@ -264,7 +264,7 @@ class WPH_Advanced_Auth {
 		if ( false !== $result ) {
 			// Log event
 			if ( class_exists( 'WPH_Logger' ) ) {
-				WPH_Logger::log( 'info', "2FA disabled for user {$user_id}" );
+				WPH_Logger::get_instance()->log( 'auth', 'info', "2FA disabled for user {$user_id}" );
 			}
 			return true;
 		}
@@ -409,7 +409,7 @@ class WPH_Advanced_Auth {
 
 		// Log event
 		if ( class_exists( 'WPH_Logger' ) ) {
-			WPH_Logger::log( 'info', "Backup code used for user {$user_id}" );
+			WPH_Logger::get_instance()->log( 'auth', 'info', "Backup code used for user {$user_id}" );
 		}
 
 		return true;
@@ -569,7 +569,7 @@ class WPH_Advanced_Auth {
 
 			// Log successful verification
 			if ( class_exists( 'WPH_Logger' ) ) {
-				WPH_Logger::log( 'info', "2FA verified for user {$user_id}" );
+				WPH_Logger::get_instance()->log( 'auth', 'info', "2FA verified for user {$user_id}" );
 			}
 
 			return true;
@@ -635,7 +635,7 @@ class WPH_Advanced_Auth {
 
 		// Log event
 		if ( class_exists( 'WPH_Logger' ) ) {
-			WPH_Logger::log( 'info', "Magic link generated for user {$user_id}" );
+			WPH_Logger::get_instance()->log( 'auth', 'info', "Magic link generated for user {$user_id}" );
 		}
 
 		return $magic_link;
@@ -688,7 +688,7 @@ class WPH_Advanced_Auth {
 		if ( $sent ) {
 			// Log event
 			if ( class_exists( 'WPH_Logger' ) ) {
-				WPH_Logger::log( 'info', "Magic link sent to user {$user_id}" );
+				WPH_Logger::get_instance()->log( 'auth', 'info', "Magic link sent to user {$user_id}" );
 			}
 			return true;
 		}
@@ -729,7 +729,7 @@ class WPH_Advanced_Auth {
 
 		// Log event
 		if ( class_exists( 'WPH_Logger' ) ) {
-			WPH_Logger::log( 'info', "User {$user_id} logged in via magic link" );
+			WPH_Logger::get_instance()->log( 'auth', 'info', "User {$user_id} logged in via magic link" );
 		}
 
 		// Redirect to admin
@@ -860,7 +860,7 @@ class WPH_Advanced_Auth {
 
 			// Log event
 			if ( class_exists( 'WPH_Logger' ) ) {
-				WPH_Logger::log( 'info', "Session created for user {$user_id} from IP {$ip_address}" );
+				WPH_Logger::get_instance()->log( 'auth', 'info', "Session created for user {$user_id} from IP {$ip_address}" );
 			}
 
 			return true;
@@ -935,7 +935,7 @@ class WPH_Advanced_Auth {
 			if ( $bind_ip && $session->ip_address !== $this->get_client_ip() ) {
 				// Log event
 				if ( class_exists( 'WPH_Logger' ) ) {
-					WPH_Logger::log( 'warning', "Session IP mismatch for user {$user_id}" );
+					WPH_Logger::get_instance()->log( 'auth', 'warning', "Session IP mismatch for user {$user_id}" );
 				}
 				return false;
 			}
@@ -946,7 +946,7 @@ class WPH_Advanced_Auth {
 		if ( $verify_fingerprint && $session->device_fingerprint !== $this->generate_device_fingerprint() ) {
 			// Log event
 			if ( class_exists( 'WPH_Logger' ) ) {
-				WPH_Logger::log( 'warning', "Session fingerprint mismatch for user {$user_id}" );
+				WPH_Logger::get_instance()->log( 'auth', 'warning', "Session fingerprint mismatch for user {$user_id}" );
 			}
 			return false;
 		}
@@ -1007,7 +1007,7 @@ class WPH_Advanced_Auth {
 
 		// Log event
 		if ( class_exists( 'WPH_Logger' ) ) {
-			WPH_Logger::log( 'info', "Session deleted for user {$user_id}" );
+			WPH_Logger::get_instance()->log( 'auth', 'info', "Session deleted for user {$user_id}" );
 		}
 	}
 
@@ -1032,7 +1032,7 @@ class WPH_Advanced_Auth {
 		if ( false !== $result ) {
 			// Log event
 			if ( class_exists( 'WPH_Logger' ) ) {
-				WPH_Logger::log( 'info', "All sessions force logged out for user {$user_id}" );
+				WPH_Logger::get_instance()->log( 'auth', 'info', "All sessions force logged out for user {$user_id}" );
 			}
 			return true;
 		}
@@ -1197,7 +1197,7 @@ class WPH_Advanced_Auth {
 
 		// Log event
 		if ( class_exists( 'WPH_Logger' ) ) {
-			WPH_Logger::log( 'info', "Password reset forced for user {$user_id}" );
+			WPH_Logger::get_instance()->log( 'auth', 'info', "Password reset forced for user {$user_id}" );
 		}
 
 		return true;
@@ -1221,7 +1221,7 @@ class WPH_Advanced_Auth {
 
 		// Log event
 		if ( class_exists( 'WPH_Logger' ) ) {
-			WPH_Logger::log( 'info', "Password reset forced for {$count} users" );
+			WPH_Logger::get_instance()->log( 'auth', 'info', "Password reset forced for {$count} users" );
 		}
 
 		return $count;
@@ -1336,7 +1336,7 @@ class WPH_Advanced_Auth {
 
 		// Log event
 		if ( class_exists( 'WPH_Logger' ) ) {
-			WPH_Logger::log( 'info', "Password changed for user {$user_id}" );
+			WPH_Logger::get_instance()->log( 'auth', 'info', "Password changed for user {$user_id}" );
 		}
 	}
 
@@ -1464,7 +1464,7 @@ class WPH_Advanced_Auth {
 		$deleted    = $wpdb->query( "DELETE FROM {$table_name} WHERE expires_at < NOW()" );
 
 		if ( $deleted && class_exists( 'WPH_Logger' ) ) {
-			WPH_Logger::log( 'info', "Cleaned up {$deleted} expired sessions" );
+			WPH_Logger::get_instance()->log( 'auth', 'info', "Cleaned up {$deleted} expired sessions" );
 		}
 
 		return $deleted ? $deleted : 0;
