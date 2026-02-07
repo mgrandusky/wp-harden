@@ -772,7 +772,7 @@ class WPH_Advanced_Auth {
 
 		// Verify IP address (optional, can be configured)
 		if ( class_exists( 'WPH_Settings' ) ) {
-			$verify_ip = WPH_Settings::get_option( 'magic_link_verify_ip', true );
+			$verify_ip = WPH_Settings::get_instance()->get( 'magic_link_verify_ip', true );
 			if ( $verify_ip && $token_data['ip_address'] !== $this->get_client_ip() ) {
 				return new WP_Error( 'ip_mismatch', __( 'IP address mismatch.', 'wp-harden' ) );
 			}
@@ -826,7 +826,7 @@ class WPH_Advanced_Auth {
 		// Check concurrent session limit
 		$max_sessions = 5;
 		if ( class_exists( 'WPH_Settings' ) ) {
-			$max_sessions = WPH_Settings::get_option( 'max_concurrent_sessions', 5 );
+			$max_sessions = WPH_Settings::get_instance()->get( 'max_concurrent_sessions', 5 );
 		}
 
 		// Delete oldest sessions if limit exceeded
@@ -931,7 +931,7 @@ class WPH_Advanced_Auth {
 
 		// Verify IP binding
 		if ( class_exists( 'WPH_Settings' ) ) {
-			$bind_ip = WPH_Settings::get_option( 'session_bind_ip', true );
+			$bind_ip = WPH_Settings::get_instance()->get( 'session_bind_ip', true );
 			if ( $bind_ip && $session->ip_address !== $this->get_client_ip() ) {
 				// Log event
 				if ( class_exists( 'WPH_Logger' ) ) {
@@ -1129,7 +1129,7 @@ class WPH_Advanced_Auth {
 		$default_timeout = 24 * 60 * 60; // 24 hours
 
 		if ( class_exists( 'WPH_Settings' ) ) {
-			return WPH_Settings::get_option( 'session_timeout', $default_timeout );
+			return WPH_Settings::get_instance()->get( 'session_timeout', $default_timeout );
 		}
 
 		return $default_timeout;
@@ -1161,7 +1161,7 @@ class WPH_Advanced_Auth {
 		// Check password expiry
 		$expiry_days = 90;
 		if ( class_exists( 'WPH_Settings' ) ) {
-			$expiry_days = WPH_Settings::get_option( 'password_expiry_days', 90 );
+			$expiry_days = WPH_Settings::get_instance()->get( 'password_expiry_days', 90 );
 		}
 
 		if ( $expiry_days <= 0 ) {
